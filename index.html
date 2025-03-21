@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Warenwirtschaftssystem</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    nav a { margin-right: 10px; text-decoration: none; color: #333; }
+    hr { margin: 20px 0; }
+    .page-section { display: none; }
+    .active { display: block; }
+    .button { padding: 5px 10px; background: #007acc; color: #fff; border: none; cursor: pointer; margin-right: 5px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    table, th, td { border: 1px solid #ccc; }
+    th, td { padding: 8px; text-align: left; }
+    .form-group { margin-bottom: 10px; }
+    .form-group label { display: block; font-weight: bold; margin-bottom: 2px; }
+    .form-group input[type="text"],
+    .form-group input[type="number"],
+    .form-group input[type="date"],
+    .form-group input[type="email"],
+    .form-group textarea,
+    .form-group select { width: 250px; padding: 5px; }
+    .detail-field { margin-bottom: 8px; }
+    .detail-field strong { display: inline-block; width: 150px; }
+  </style>
+  <script>
+    // ------------------------------
+    // Hilfsfunktion für AJAX-Aufrufe
+    // ------------------------------
+    function ajaxRequest(action, data, callback) {
+      let xhr = new XMLHttpRequest();
+      xhr.open("POST", "api.php?action=" + action, true);
+      xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+          callback(JSON.parse(xhr.responseText));
+        }
+      };
+      // Baue die POST-Daten als URL-kodierte Zeichenkette
+      let params = [];
+      for (let key in data) {
+        params.push(encodeURIComponent(key) + "=" + encodeURIComponent(data[key]));
+      }
+      xhr.send(params.join("&"));
+    }
+
+    // ------------------------------
+    // Beispiel: Produkt speichern via AJAX
+    // ------------------------------
+    function saveProduct() {
+      let data = {
+        title: document.getElementById('productTitle').value,
+        description: document.getElementById('productDescription').value,
+        ean: document.getElementById('productEAN').value,
+        sku: document.getElementById('productSKU').value,
+        unit: document.getElementById('productUnit').value,
+        color: document.getElementById('productColor').value,
+        size: document.getElementById('productSize').value,
+        category: document.getElementById('productCategory').value,
+        storageLocation: document.getElementById('productStorageLocation').value,
+        expiryDate: document.getElementById('productExpiryDate').value,
+        supplierId: document.getElementById('productSupplier').value,
+        extraText: document.getElementById('productExtraText').value,
+        purchasePrice: document.getElementById('productPurchasePrice').value,
+        salePrice: document.getElementById('productSalePrice').value,
+        taxRate: document.getElementById('productTaxRate').value,
+        minStock: document.getElementById('productMinStock').value,
+        minOrderQty: document.getElementById('productMinOrderQty').value,
+        stock: document.getElementById('productStock').value,
+        status: document.getElementById('productStatus').value,
+        cashView: document.getElementById('productCashView').value,
+        promotionPrice: document.getElementById('productPromotionPrice').value,
+        promotionStartDate: document.getElementById('productPromotionStartDate').value,
+        promotionEndDate: document.getElementById('productPromotionEndDate').value
+      };
+      ajaxRequest("saveProduct", data, function(response) {
+        if(response.status === "success") {
+          alert("Produkt gespeichert, ID: " + response.id);
+          // Hier kannst Du die Produktliste neu laden oder die Seite aktualisieren
+        } else {
+          alert("Fehler: " + response.message);
+        }
+      });
+    }
+
+    // ------------------------------
+    // Automatischer Logout nach 5 Minuten Inaktivität
+    // ------------------------------
+    let inactivityTimer;
+    function resetInactivityTimer() {
+      clearTimeout(inactivityTimer);
+      inactivityTimer = setTimeout(function() {
+        alert("Sie wurden aufgrund von Inaktivität automatisch abgemeldet.");
+        window.location.href = "index.php?logout=1";
+      }, 300000); // 300.000 ms = 5 Minuten
+    }
+    document.addEventListener("mousemove", resetInactivityTimer);
+    document.addEventListener("keypress", resetInactivityTimer);
+    resetInactivityTimer();
+
+    // ------------------------------
+    // Anzeige des aktuell eingeloggten Benutzers
+    // ------------------------------
+    let currentUser = null;
+    function updateCurrentUserDisplay(name) {
+      document.getElementById('currentUserDisplay').textContent = name;
+    }
+
+    // ------------------------------
+    // Navigation und Seitenanzeige
+    // ------------------------------
+    function showSection(sectionId) {
+      document.querySelectorAll('.page-section').forEach(sec => sec.classList.remove('active'));
+      let target = document.getElementById(sectionId);
+      if(target) {
+        target.classList.add('active');
+        window.location.hash = sectionId;
+      }
+      // Hier können weitere Initialisierungen erfolgen
+    }
+
+    // ------------------------------
+    // Beispiel: Login per AJAX
+    // ------------------------------
+    function doLogin(event) {
+      event.preventDefault();
+      let username = document.getElementById('loginUsername').value;
+      let password = document.getElementById('loginPassword').value;
+      ajaxRequest("login", {username: username, password: password}, function(response) {
+        if(response.status === "success") {
+          currentUser = response.user;
+          updateCurrentUserDisplay(currentUser.name);
+          showSection("home");
+        } else {
+          document.getElementById('loginError').textContent = "Anmeldedaten falsch";
+        }
+      });
+    }
+  </script>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav>
+    <span id="currentUserDisplay"></span>
+    <a href="javascript:void(0);" onclick="showSection('home'); return false;">Home</a> |
+    <a href="javascript:void(0);" onclick="showSection('products'); return false;">Produkte</a> |
+    <a href="javascript:void(0);" onclick="showSection('customers'); return false;">Kunden</a> |
+    <!-- Weitere Menüpunkte -->
+    <a href="javascript:void(0);" onclick="window.location.href='index.php?logout=1'; return false;">Logout</a>
+  </nav>
+  <hr>
+
+  <!-- Beispiel: Login-Section -->
+  <div id="login" class="page-section">
+    <h1>Anmeldung</h1>
+    <form onsubmit="doLogin(event); return false;">
+      <div class="form-group">
+        <label>Benutzername:</label>
+        <input type="text" id="loginUsername" required>
+      </div>
+      <div class="form-group">
+        <label>Passwort:</label>
+        <input type="password" id="loginPassword" required>
+      </div>
+      <input type="submit" value="Anmelden" class="button">
+    </form>
+    <p id="loginError" style="color:red;"></p>
+  </div>
+
+  <!-- Hier folgen alle weiteren Page-Sections (Home, Produkte, Kunden, etc.) – analog zu Deinem bisherigen Code -->
+  <!-- Beispielsweise: -->
+  <div id="home" class="page-section">
+    <h1>Willkommen im Warenwirtschaftssystem</h1>
+    <p>Hallo <strong id="currentUserDisplay"></strong>, bitte wählen Sie eine Option aus dem Menü.</p>
+  </div>
+
+  <!-- ... weitere Sections für Produkte, Kunden, Kategorien, Lieferanten, Aufträge, Bestellungen, Retouren, etc. ... -->
+
+  <hr>
+  <footer>
+    <p>&copy; 2025 Warenwirtschaftssystem</p>
+  </footer>
+</body>
+</html>
