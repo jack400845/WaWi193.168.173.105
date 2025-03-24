@@ -32,6 +32,61 @@
     <p style="color:red;">Bitte aktivieren Sie JavaScript, da dieses System auf dynamische Funktionen angewiesen ist.</p>
   </noscript>
   <script>
+    function ajaxRequest(action, data, callback) {
+      let xhr = new XMLHttpRequest();
+      xhr.open("POST", "api.php?action=" + action, true);
+      xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+          callback(JSON.parse(xhr.responseText));
+        }
+      };
+      // Baue die POST-Daten als URL-kodierte Zeichenkette
+      let params = [];
+      for (let key in data) {
+        params.push(encodeURIComponent(key) + "=" + encodeURIComponent(data[key]));
+      }
+      xhr.send(params.join("&"));
+    }
+
+    // ------------------------------
+    // Beispiel: Produkt speichern via AJAX
+    // ------------------------------
+    function saveProduct() {
+      let data = {
+        title: document.getElementById('productTitle').value,
+        description: document.getElementById('productDescription').value,
+        ean: document.getElementById('productEAN').value,
+        sku: document.getElementById('productSKU').value,
+        unit: document.getElementById('productUnit').value,
+        color: document.getElementById('productColor').value,
+        size: document.getElementById('productSize').value,
+        category: document.getElementById('productCategory').value,
+        storageLocation: document.getElementById('productStorageLocation').value,
+        expiryDate: document.getElementById('productExpiryDate').value,
+        supplierId: document.getElementById('productSupplier').value,
+        extraText: document.getElementById('productExtraText').value,
+        purchasePrice: document.getElementById('productPurchasePrice').value,
+        salePrice: document.getElementById('productSalePrice').value,
+        taxRate: document.getElementById('productTaxRate').value,
+        minStock: document.getElementById('productMinStock').value,
+        minOrderQty: document.getElementById('productMinOrderQty').value,
+        stock: document.getElementById('productStock').value,
+        status: document.getElementById('productStatus').value,
+        cashView: document.getElementById('productCashView').value,
+        promotionPrice: document.getElementById('productPromotionPrice').value,
+        promotionStartDate: document.getElementById('productPromotionStartDate').value,
+        promotionEndDate: document.getElementById('productPromotionEndDate').value
+      };
+      ajaxRequest("saveProduct", data, function(response) {
+        if(response.status === "success") {
+          alert("Produkt gespeichert, ID: " + response.id);
+          // Hier kannst Du die Produktliste neu laden oder die Seite aktualisieren
+        } else {
+          alert("Fehler: " + response.message);
+        }
+      });
+    }
     /* -----------------------------------------
        1) DATENHALTUNG
     ----------------------------------------- */
@@ -49,26 +104,26 @@
     ];
     
     let masterData = {
-      companyName: "Musterfirma GmbH",
-      addressZusatz: "Adresse Zusatz",
-      street: "Musterstraße 1",
-      zip: "12345",
-      city: "Musterstadt",
+      companyName: "Samsung Store Muenster",
+      addressZusatz: "Ludgeristraße 119",
+      street: "Ludgeristraße 119",
+      zip: "48143",
+      city: "Muenster",
       country: "Deutschland",
-      phone1: "01234 56789",
-      phone2: "09876 54321",
-      fax: "01234 00000",
-      email: "info@musterfirma.de",
-      website: "www.musterfirma.de",
-      ustId: "DE123456789",
-      taxCode: "TAX123",
-      bankName: "Musterbank",
-      iban: "DE89 3704 0044 0532 0130 00",
-      bic: "COBADEFFXXX",
-      kontoNummer: "53201300",
-      kontoInhaber: "Musterfirma GmbH",
-      bankleitzahl: "37040044",
-      referenz: "REF123"
+      phone1: "0251 9634087",
+      phone2: "",
+      fax: "",
+      email: "samsungstore.meunster@gmail.com",
+      website: "",
+      ustId: "21185604629",
+      taxCode: "",
+      bankName: "Sparkasse Muensterland Ost",
+      iban: "DE41 4005 0150 0073 8567 70",
+      bic: "WELADED1MST",
+      kontoNummer: "",
+      kontoInhaber: "SAMSUNG STORE GERMANY GmbH",
+      bankleitzahl: "40050150",
+      referenz: "34-23"
     };
     
     let colors = ["Rot", "Blau", "Grün"];
@@ -87,6 +142,18 @@
     /* -----------------------------------------
        2) INAKTIVITÄT & LOGOUT
     ----------------------------------------- */
+    function doLogin(event) {
+      event.preventDefault();
+      let username = document.getElementById('loginUsername').value;
+      let password = document.getElementById('loginPassword').value;
+      ajaxRequest("login", {username: username, password: password}, function(response) {
+        if(response.status === "success") {
+          currentUser = response.user;
+          updateCurrentUserDisplay(currentUser.name);
+          showSection("home");
+        } else {
+          document.getElementById('loginError').textContent = "Anmeldedaten falsch";
+        }
     function resetInactivityTimer() {
       if (currentUser) {
         clearTimeout(inactivityTimer);
