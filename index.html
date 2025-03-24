@@ -1,0 +1,3607 @@
+<?php
+// PHP-Backend: Falls ein GET-Parameter "action" gesetzt ist, werden die per POST gesendeten JSON-Daten in die MySQL-Datenbank geschrieben.
+
+if (isset($_GET['action'])) {
+    // MySQL-Zugangsdaten
+    $servername = "expert-sagan-577.lima-db.de";
+    $port = 3306;
+    $username = "USER445211";
+    $password = "pobwod-0siqma-syMmur";
+    $dbname = "db_445211_1";
+
+    // Verbindung herstellen
+    $conn = new mysqli($servername, $username, $password, $dbname, $port);
+    if ($conn->connect_error) {
+        die(json_encode(["status" => "error", "message" => "Connection failed: " . $conn->connect_error]));
+    }
+
+    // JSON-Daten einlesen
+    $data = file_get_contents("php://input");
+    if (!$data) {
+        echo json_encode(["status" => "error", "message" => "No data received"]);
+        $conn->close();
+        exit;
+    }
+    $json = json_decode($data, true);
+    if (!$json) {
+        echo json_encode(["status" => "error", "message" => "Invalid JSON"]);
+        $conn->close();
+        exit;
+    }
+
+    $action = $_GET['action'];
+    switch ($action) {
+
+        case "saveProduct":
+            // Erwartete Felder: title, description, ean, sku, unit, color, size, category, storageLocation, expiryDate, supplierId, extraText, purchasePrice, salePrice, taxRate, minStock, minOrderQty, stock, status, cashView, promotionPrice, promotionStartDate, promotionEndDate
+            $title = $conn->real_escape_string($json["title"]);
+            $description = $conn->real_escape_string($json["description"]);
+            $ean = isset($json["ean"]) ? $conn->real_escape_string($json["ean"]) : "";
+            $sku = isset($json["sku"]) ? $conn->real_escape_string($json["sku"]) : "";
+            $unit = isset($json["unit"]) ? $conn->real_escape_string($json["unit"]) : "STK";
+            $color = isset($json["color"]) ? $conn->real_escape_string($json["color"]) : "";
+            $size = isset($json["size"]) ? $conn->real_escape_string($json["size"]) : "";
+            $category = isset($json["category"]) ? $conn->real_escape_string($json["category"]) : "";
+            $storageLocation = isset($json["storageLocation"]) ? $conn->real_escape_string($json["storageLocation"]) : "Standardlagerplatz";
+            $expiryDate = isset($json["expiryDate"]) ? $conn->real_escape_string($json["expiryDate"]) : "";
+            $supplierId = isset($json["supplierId"]) ? intval($json["supplierId"]) : "NULL";
+            $extraText = isset($json["extraText"]) ? $conn->real_escape_string($json["extraText"]) : "";
+            $purchasePrice = floatval($json["purchasePrice"]);
+            $salePrice = floatval($json["salePrice"]);
+            $taxRate = intval($json["taxRate"]);
+            $minStock = intval($json["minStock"]);
+            $minOrderQty = intval($json["minOrderQty"]);
+            $stock = intval($json["stock"]);
+            $status = isset($json["status"]) ? $conn->real_escape_string($json["status"]) : "Aktiv";
+            $cashView = isset($json["cashView"]) ? $conn->real_escape_string($json["cashView"]) : "Ja";
+            $promotionPrice = floatval($json["promotionPrice"]);
+            $promotionStartDate = isset($json["promotionStartDate"]) ? $conn->real_escape_string($json["promotionStartDate"]) : "";
+            $promotionEndDate = isset($json["promotionEndDate"]) ? $conn->real_escape_string($json["promotionEndDate"]) : "";
+            $sql = "INSERT INTO products (title, description, ean, sku, unit, color, size, category, storageLocation, expiryDate, supplierId, extraText, purchasePrice, salePrice, taxRate, minStock, minOrderQty, stock, status, cashView, promotionPrice, promotionStartDate, promotionEndDate)
+                    VALUES ('$title', '$description', '$ean', '$sku', '$unit', '$color', '$size', '$category', '$storageLocation', '$expiryDate', " . ($supplierId === "NULL" ? "NULL" : $supplierId) . ", '$extraText', $purchasePrice, $salePrice, $taxRate, $minStock, $minOrderQty, $stock, '$status', '$cashView', $promotionPrice, '$promotionStartDate', '$promotionEndDate')";
+            if ($conn->query($sql) === TRUE) {
+                echo json_encode(["status" => "success", "id" => $conn->insert_id]);
+            } else {
+                echo json_encode(["status" => "error", "message" => $conn->error]);
+            }
+            break;
+
+        case "saveCustomer":
+            $customerNumber = isset($json["customerNumber"]) ? $conn->real_escape_string($json["customerNumber"]) : "";
+            $customerCompanyName = isset($json["customerCompanyName"]) ? $conn->real_escape_string($json["customerCompanyName"]) : "";
+            $customerAddressZusatz = isset($json["customerAddressZusatz"]) ? $conn->real_escape_string($json["customerAddressZusatz"]) : "";
+            $customerStreet = isset($json["customerStreet"]) ? $conn->real_escape_string($json["customerStreet"]) : "";
+            $customerZip = isset($json["customerZip"]) ? $conn->real_escape_string($json["customerZip"]) : "";
+            $customerCity = isset($json["customerCity"]) ? $conn->real_escape_string($json["customerCity"]) : "";
+            $customerCountry = isset($json["customerCountry"]) ? $conn->real_escape_string($json["customerCountry"]) : "";
+            $customerPhone1 = isset($json["customerPhone1"]) ? $conn->real_escape_string($json["customerPhone1"]) : "";
+            $customerPhone2 = isset($json["customerPhone2"]) ? $conn->real_escape_string($json["customerPhone2"]) : "";
+            $customerFax = isset($json["customerFax"]) ? $conn->real_escape_string($json["customerFax"]) : "";
+            $customerEmail = isset($json["customerEmail"]) ? $conn->real_escape_string($json["customerEmail"]) : "";
+            $customerWebsite = isset($json["customerWebsite"]) ? $conn->real_escape_string($json["customerWebsite"]) : "";
+            $customerUstId = isset($json["customerUstId"]) ? $conn->real_escape_string($json["customerUstId"]) : "";
+            $customerTaxCode = isset($json["customerTaxCode"]) ? $conn->real_escape_string($json["customerTaxCode"]) : "";
+            $customerDiscount = floatval($json["customerDiscount"]);
+            $customerExtraText = isset($json["customerExtraText"]) ? $conn->real_escape_string($json["customerExtraText"]) : "";
+            $sql = "INSERT INTO customers (customerNumber, customerCompanyName, customerAddressZusatz, customerStreet, customerZip, customerCity, customerCountry, customerPhone1, customerPhone2, customerFax, customerEmail, customerWebsite, customerUstId, customerTaxCode, customerDiscount, customerExtraText)
+                    VALUES ('$customerNumber', '$customerCompanyName', '$customerAddressZusatz', '$customerStreet', '$customerZip', '$customerCity', '$customerCountry', '$customerPhone1', '$customerPhone2', '$customerFax', '$customerEmail', '$customerWebsite', '$customerUstId', '$customerTaxCode', $customerDiscount, '$customerExtraText')";
+            if ($conn->query($sql) === TRUE) {
+                echo json_encode(["status" => "success", "id" => $conn->insert_id]);
+            } else {
+                echo json_encode(["status" => "error", "message" => $conn->error]);
+            }
+            break;
+
+        case "saveCategory":
+            $name = $conn->real_escape_string($json["name"]);
+            $description = isset($json["description"]) ? $conn->real_escape_string($json["description"]) : "";
+            $sql = "INSERT INTO categories (name, description) VALUES ('$name', '$description')";
+            if ($conn->query($sql) === TRUE) {
+                echo json_encode(["status" => "success", "id" => $conn->insert_id]);
+            } else {
+                echo json_encode(["status" => "error", "message" => $conn->error]);
+            }
+            break;
+
+        case "saveSupplier":
+            $supplierNumber = isset($json["supplierNumber"]) ? $conn->real_escape_string($json["supplierNumber"]) : "";
+            $supplierCompanyName = isset($json["supplierCompanyName"]) ? $conn->real_escape_string($json["supplierCompanyName"]) : "";
+            $supplierAddressZusatz = isset($json["supplierAddressZusatz"]) ? $conn->real_escape_string($json["supplierAddressZusatz"]) : "";
+            $supplierStreet = isset($json["supplierStreet"]) ? $conn->real_escape_string($json["supplierStreet"]) : "";
+            $supplierZip = isset($json["supplierZip"]) ? $conn->real_escape_string($json["supplierZip"]) : "";
+            $supplierCity = isset($json["supplierCity"]) ? $conn->real_escape_string($json["supplierCity"]) : "";
+            $supplierCountry = isset($json["supplierCountry"]) ? $conn->real_escape_string($json["supplierCountry"]) : "";
+            $supplierPhone1 = isset($json["supplierPhone1"]) ? $conn->real_escape_string($json["supplierPhone1"]) : "";
+            $supplierPhone2 = isset($json["supplierPhone2"]) ? $conn->real_escape_string($json["supplierPhone2"]) : "";
+            $supplierFax = isset($json["supplierFax"]) ? $conn->real_escape_string($json["supplierFax"]) : "";
+            $supplierEmail = isset($json["supplierEmail"]) ? $conn->real_escape_string($json["supplierEmail"]) : "";
+            $supplierWebsite = isset($json["supplierWebsite"]) ? $conn->real_escape_string($json["supplierWebsite"]) : "";
+            $supplierUstId = isset($json["supplierUstId"]) ? $conn->real_escape_string($json["supplierUstId"]) : "";
+            $supplierTaxCode = isset($json["supplierTaxCode"]) ? $conn->real_escape_string($json["supplierTaxCode"]) : "";
+            $supplierZusatztext = isset($json["supplierZusatztext"]) ? $conn->real_escape_string($json["supplierZusatztext"]) : "";
+            $supplierOwnCustomerNumber = isset($json["supplierOwnCustomerNumber"]) ? $conn->real_escape_string($json["supplierOwnCustomerNumber"]) : "";
+            $sql = "INSERT INTO suppliers (supplierNumber, supplierCompanyName, supplierAddressZusatz, supplierStreet, supplierZip, supplierCity, supplierCountry, supplierPhone1, supplierPhone2, supplierFax, supplierEmail, supplierWebsite, supplierUstId, supplierTaxCode, supplierZusatztext, supplierOwnCustomerNumber)
+                    VALUES ('$supplierNumber', '$supplierCompanyName', '$supplierAddressZusatz', '$supplierStreet', '$supplierZip', '$supplierCity', '$supplierCountry', '$supplierPhone1', '$supplierPhone2', '$supplierFax', '$supplierEmail', '$supplierWebsite', '$supplierUstId', '$supplierTaxCode', '$supplierZusatztext', '$supplierOwnCustomerNumber')";
+            if ($conn->query($sql) === TRUE) {
+                echo json_encode(["status" => "success", "id" => $conn->insert_id]);
+            } else {
+                echo json_encode(["status" => "error", "message" => $conn->error]);
+            }
+            break;
+
+        case "saveAuftrag":
+            $number = $conn->real_escape_string($json["number"]);
+            $date = $conn->real_escape_string($json["date"]);
+            $customerId = intval($json["customerId"]);
+            $status = $conn->real_escape_string($json["status"]);
+            $diffAddress = isset($json["diffAddress"]) ? intval($json["diffAddress"]) : 0;
+            $shipping = $conn->real_escape_string($json["shipping"]);
+            $shippingCost = floatval($json["shippingCost"]);
+            $note = $conn->real_escape_string($json["note"]);
+            $discount = floatval($json["discount"]);
+            // Produkte werden als JSON-String gespeichert (alternativ in einer eigenen Tabelle)
+            $products = isset($json["products"]) ? $conn->real_escape_string(json_encode($json["products"])) : "[]";
+            $sql = "INSERT INTO auftraege (number, date, customerId, status, diffAddress, shipping, shippingCost, note, discount, products)
+                    VALUES ('$number', '$date', $customerId, '$status', $diffAddress, '$shipping', $shippingCost, '$note', $discount, '$products')";
+            if ($conn->query($sql) === TRUE) {
+                echo json_encode(["status" => "success", "id" => $conn->insert_id]);
+            } else {
+                echo json_encode(["status" => "error", "message" => $conn->error]);
+            }
+            break;
+
+        case "saveBestellung":
+            $number = $conn->real_escape_string($json["number"]);
+            $date = $conn->real_escape_string($json["date"]);
+            $supplierId = intval($json["supplierId"]);
+            $status = $conn->real_escape_string($json["status"]);
+            $note = $conn->real_escape_string($json["note"]);
+            $discount = floatval($json["discount"]);
+            $products = isset($json["products"]) ? $conn->real_escape_string(json_encode($json["products"])) : "[]";
+            $sql = "INSERT INTO bestellungen (number, date, supplierId, status, note, discount, products)
+                    VALUES ('$number', '$date', $supplierId, '$status', '$note', $discount, '$products')";
+            if ($conn->query($sql) === TRUE) {
+                echo json_encode(["status" => "success", "id" => $conn->insert_id]);
+            } else {
+                echo json_encode(["status" => "error", "message" => $conn->error]);
+            }
+            break;
+
+        case "saveRetoure":
+            $retoureNumber = $conn->real_escape_string($json["retoureNumber"]);
+            $retoureDate = $conn->real_escape_string($json["retoureDate"]);
+            $retourePurchaseDate = $conn->real_escape_string($json["retourePurchaseDate"]);
+            $retoureReason = $conn->real_escape_string($json["retoureReason"]);
+            $discount = floatval($json["discount"]);
+            $products = isset($json["products"]) ? $conn->real_escape_string(json_encode($json["products"])) : "[]";
+            $sql = "INSERT INTO retoure (retoureNumber, retoureDate, retourePurchaseDate, retoureReason, discount, products)
+                    VALUES ('$retoureNumber', '$retoureDate', '$retourePurchaseDate', '$retoureReason', $discount, '$products')";
+            if ($conn->query($sql) === TRUE) {
+                echo json_encode(["status" => "success", "id" => $conn->insert_id]);
+            } else {
+                echo json_encode(["status" => "error", "message" => $conn->error]);
+            }
+            break;
+
+        case "saveMasterdata":
+            $companyName = $conn->real_escape_string($json["companyName"]);
+            $addressZusatz = $conn->real_escape_string($json["addressZusatz"]);
+            $street = $conn->real_escape_string($json["street"]);
+            $zip = $conn->real_escape_string($json["zip"]);
+            $city = $conn->real_escape_string($json["city"]);
+            $country = $conn->real_escape_string($json["country"]);
+            $phone1 = $conn->real_escape_string($json["phone1"]);
+            $phone2 = $conn->real_escape_string($json["phone2"]);
+            $fax = $conn->real_escape_string($json["fax"]);
+            $email = $conn->real_escape_string($json["email"]);
+            $website = $conn->real_escape_string($json["website"]);
+            $ustId = $conn->real_escape_string($json["ustId"]);
+            $taxCode = $conn->real_escape_string($json["taxCode"]);
+            $bankName = $conn->real_escape_string($json["bankName"]);
+            $iban = $conn->real_escape_string($json["iban"]);
+            $bic = $conn->real_escape_string($json["bic"]);
+            $kontoNummer = $conn->real_escape_string($json["kontoNummer"]);
+            $kontoInhaber = $conn->real_escape_string($json["kontoInhaber"]);
+            $bankleitzahl = $conn->real_escape_string($json["bankleitzahl"]);
+            $referenz = $conn->real_escape_string($json["referenz"]);
+            // Wir verwenden REPLACE INTO, um einen existierenden Eintrag (id=1) zu ersetzen oder neu zu erstellen.
+            $sql = "REPLACE INTO masterdata (id, companyName, addressZusatz, street, zip, city, country, phone1, phone2, fax, email, website, ustId, taxCode, bankName, iban, bic, kontoNummer, kontoInhaber, bankleitzahl, referenz)
+                    VALUES (1, '$companyName', '$addressZusatz', '$street', '$zip', '$city', '$country', '$phone1', '$phone2', '$fax', '$email', '$website', '$ustId', '$taxCode', '$bankName', '$iban', '$bic', '$kontoNummer', '$kontoInhaber', '$bankleitzahl', '$referenz')";
+            if ($conn->query($sql) === TRUE) {
+                echo json_encode(["status" => "success"]);
+            } else {
+                echo json_encode(["status" => "error", "message" => $conn->error]);
+            }
+            break;
+
+        case "saveUser":
+            $username = $conn->real_escape_string($json["username"]);
+            $name = $conn->real_escape_string($json["name"]);
+            $password = $conn->real_escape_string($json["password"]);
+            $role = $conn->real_escape_string($json["role"]);
+            $sql = "INSERT INTO users (username, name, password, role)
+                    VALUES ('$username', '$name', '$password', '$role')";
+            if ($conn->query($sql) === TRUE) {
+                echo json_encode(["status" => "success", "id" => $conn->insert_id]);
+            } else {
+                echo json_encode(["status" => "error", "message" => $conn->error]);
+            }
+            break;
+
+        default:
+            echo json_encode(["status" => "error", "message" => "Invalid action"]);
+            break;
+    }
+    $conn->close();
+    exit;
+}
+?>
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Warenwirtschaftssystem</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    nav a { margin-right: 10px; text-decoration: none; color: #333; }
+    nav span { margin-left: 20px; font-weight: bold; }
+    hr { margin: 20px 0; }
+    .page-section { display: none; }
+    .active { display: block; }
+    .button { padding: 5px 10px; background: #007acc; color: #fff; border: none; cursor: pointer; margin-right: 5px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    table, th, td { border: 1px solid #ccc; }
+    th, td { padding: 8px; text-align: left; }
+    .form-group { margin-bottom: 10px; }
+    .form-group label { display: block; font-weight: bold; margin-bottom: 2px; }
+    .form-group input[type="text"],
+    .form-group input[type="number"],
+    .form-group input[type="date"],
+    .form-group input[type="email"],
+    .form-group input[type="password"],
+    .form-group textarea,
+    .form-group select { width: 250px; padding: 5px; }
+    .detail-field { margin-bottom: 8px; }
+    .detail-field strong { display: inline-block; width: 150px; }
+  </style>
+  <script>
+    /* JavaScript-Teil: Hier werden die Seiten (Navigation, Login, etc.) verwaltet.
+       In der Produktion sollten die Funktionen zum Speichern der Daten per AJAX
+       (z.B. mittels fetch) an index.php?action=... gesendet werden.
+       Zusätzlich wird ein Logout-Symbol sowie eine Anzeige des aktuell angemeldeten Benutzers
+       eingebaut und ein automatischer Logout nach 5 Min. Inaktivität durchgeführt.
+    */
+    let productsData = [];
+    let customersData = [];
+    let categoriesData = [];
+    let suppliersData = [];
+    let auftraegeData = [];
+    let bestellungenData = [];
+    let transactionsData = [];
+    let usersData = [
+      { username: "Stl", name: "Store Leitung", password: "1234", role: "Storeleitung (Admin)" }
+    ];
+    let masterData = {
+      companyName: "Musterfirma GmbH",
+      addressZusatz: "Adresse Zusatz",
+      street: "Musterstraße 1",
+      zip: "12345",
+      city: "Musterstadt",
+      country: "Deutschland",
+      phone1: "01234 56789",
+      phone2: "09876 54321",
+      fax: "01234 00000",
+      email: "info@musterfirma.de",
+      website: "www.musterfirma.de",
+      ustId: "DE123456789",
+      taxCode: "TAX123",
+      bankName: "Musterbank",
+      iban: "DE89 3704 0044 0532 0130 00",
+      bic: "COBADEFFXXX",
+      kontoNummer: "53201300",
+      kontoInhaber: "Musterfirma GmbH",
+      bankleitzahl: "37040044",
+      referenz: "REF123"
+    };
+    let colors = ["Rot", "Blau", "Grün"];
+    let sizes = ["S", "M", "L"];
+    let currentUser = null;
+    let businessClosed = false;
+    let currentRetoure = { id: null, retoureNumber: "", retoureDate: "", retourePurchaseDate: "", retoureReason: "", discount: 0, products: [] };
+
+    function showSection(sectionId) {
+      if (!currentUser && sectionId !== "login" && sectionId !== "benutzerverwaltung") {
+        sectionId = "login";
+      }
+      document.querySelectorAll('.page-section').forEach(sec => sec.classList.remove('active'));
+      const target = document.getElementById(sectionId);
+      if (target) {
+        target.classList.add('active');
+        window.location.hash = sectionId;
+      }
+      // Hier rufen wir die entsprechenden Funktionen auf – in einer produktiven Anwendung per AJAX
+      switch(sectionId) {
+        case 'products': renderProducts(); break;
+        case 'customers': renderCustomers(); break;
+        case 'categories': renderCategories(); break;
+        case 'suppliers': renderSuppliers(); break;
+        case 'auftraege': renderAuftraege(); break;
+        case 'bestellungen': renderBestellungen(); break;
+        case 'transaktionen': renderTransaktionen(); break;
+        case 'masterdata': renderMasterdata(); break;
+        case 'verwaltung': renderVerwaltung(); break;
+        case 'auftrag_form': populateAuftragFormSelects(); break;
+        case 'auftrag_products': populateAuftragProducts(); break;
+        case 'bestellung_form': populateBestellungFormSelects(); break;
+        case 'bestellung_products': populateBestellungProducts(); break;
+        case 'retoure_products': populateRetoureProducts(); break;
+        case 'tagesabschluss': renderTagesabschluss(); break;
+        case 'benutzerverwaltung': renderBenutzer(); break;
+        default: break;
+      }
+      updateCurrentUserDisplay();
+      resetLogoutTimer();
+    }
+
+    function doLogin(event) {
+      event.preventDefault();
+      const uname = document.getElementById('loginUsername').value;
+      const pwd = document.getElementById('loginPassword').value;
+      const user = usersData.find(u => u.username === uname && u.password === pwd);
+      if(user) {
+        currentUser = user;
+        showSection('home');
+      } else {
+        document.getElementById('loginError').textContent = "Anmeldedaten falsch";
+      }
+    }
+
+    function logout() {
+      currentUser = null;
+      document.getElementById('loginUsername').value = "";
+      document.getElementById('loginPassword').value = "";
+      showSection('login');
+      if(logoutTimer) clearTimeout(logoutTimer);
+    }
+    let logoutTimer = null;
+    function resetLogoutTimer() {
+      if(logoutTimer) clearTimeout(logoutTimer);
+      logoutTimer = setTimeout(function(){
+        alert("Automatischer Logout nach 5 Minuten Inaktivität.");
+        logout();
+      }, 300000);
+    }
+    document.addEventListener("mousemove", resetLogoutTimer);
+    document.addEventListener("keydown", resetLogoutTimer);
+    document.addEventListener("click", resetLogoutTimer);
+
+    function updateCurrentUserDisplay() {
+      let display = document.getElementById('currentUserDisplay');
+      if(display) {
+        if(currentUser)
+          display.textContent = "Angemeldet als: " + currentUser.name + " (" + currentUser.role + ")";
+        else
+          display.textContent = "";
+      }
+    }
+
+    // Die Funktionen zum Rendern, Speichern etc. sind hier nur als Platzhalter implementiert.
+    function renderProducts() { /* AJAX-Aufruf hier */ }
+    function renderCustomers() { alert("Kunden rendern – AJAX-Aufruf implementieren"); }
+    function renderCategories() { alert("Kategorien rendern – AJAX-Aufruf implementieren"); }
+    function renderSuppliers() { alert("Lieferanten rendern – AJAX-Aufruf implementieren"); }
+    function renderAuftraege() { alert("Aufträge rendern – AJAX-Aufruf implementieren"); }
+    function renderBestellungen() { alert("Bestellungen rendern – AJAX-Aufruf implementieren"); }
+    function renderTransaktionen() { alert("Transaktionen rendern – AJAX-Aufruf implementieren"); }
+    function renderMasterdata() { alert("Stammdaten rendern – AJAX-Aufruf implementieren"); }
+    function renderVerwaltung() { alert("Verwaltung rendern – AJAX-Aufruf implementieren"); }
+    function populateAuftragFormSelects() { alert("Auftrag Form Selects befüllen – AJAX-Aufruf implementieren"); }
+    function populateAuftragProducts() { alert("Auftrag Produkte befüllen – AJAX-Aufruf implementieren"); }
+    function populateBestellungFormSelects() { alert("Bestellung Form Selects befüllen – AJAX-Aufruf implementieren"); }
+    function populateBestellungProducts() { alert("Bestellung Produkte befüllen – AJAX-Aufruf implementieren"); }
+    function populateRetoureProducts() { alert("Retoure Produkte befüllen – AJAX-Aufruf implementieren"); }
+    function renderTagesabschluss() { alert("Tagesabschluss rendern – AJAX-Aufruf implementieren"); }
+    function renderBenutzer() { alert("Benutzer rendern – AJAX-Aufruf implementieren"); }
+
+    function renderLogin() {
+      document.getElementById('loginError').textContent = "";
+      document.getElementById('loginUsername').value = "";
+      document.getElementById('loginPassword').value = "";
+    }
+
+    window.onload = function() {
+      showSection('login');
+      renderLogin();
+    }
+  </script>
+</head>
+<body>
+  <nav>
+    <a href="javascript:void(0);" onclick="showSection('home'); return false;">Home</a> |
+    <a href="javascript:void(0);" onclick="showSection('products'); return false;">Produkte</a> |
+    <a href="javascript:void(0);" onclick="showSection('customers'); return false;">Kunden</a> |
+    <a href="javascript:void(0);" onclick="showSection('categories'); return false;">Kategorien</a> |
+    <a href="javascript:void(0);" onclick="showSection('suppliers'); return false;">Lieferanten</a> |
+    <a href="javascript:void(0);" onclick="showSection('auftraege'); return false;">Aufträge</a> |
+    <a href="javascript:void(0);" onclick="showSection('bestellungen'); return false;">Bestellungen</a> |
+    <a href="javascript:void(0);" onclick="showSection('transaktionen'); return false;">Transaktionen</a> |
+    <a href="javascript:void(0);" onclick="showSection('such_filter'); return false;">Such-/Filteraktion</a> |
+    <a href="javascript:void(0);" onclick="showSection('masterdata'); return false;">Stammdaten</a> |
+    <a href="javascript:void(0);" onclick="showSection('verwaltung'); return false;">Verwaltung</a> |
+    <a href="javascript:void(0);" onclick="showSection('retoure_form'); return false;">Retouren</a> |
+    <a href="javascript:void(0);" onclick="showSection('tagesabschluss'); return false;">Tagesabschluss</a> |
+    <a href="javascript:void(0);" onclick="showSection('bericht_statistik'); return false;">Bericht / Statistik</a> |
+    <a href="javascript:void(0);" onclick="showSection('benutzerverwaltung'); return false;">Benutzerverwaltung</a>
+    <span id="currentUserDisplay"></span>
+    <a href="javascript:void(0);" onclick="logout(); return false;">Logout</a>
+  </nav>
+  <hr>
+  <!-- LOGIN -->
+  <div id="login" class="page-section">
+    <h1>Anmeldung</h1>
+    <form onsubmit="doLogin(event); return false;">
+      <div class="form-group">
+        <label>Benutzername:</label>
+        <input type="text" id="loginUsername" required>
+      </div>
+      <div class="form-group">
+        <label>Passwort:</label>
+        <input type="password" id="loginPassword" required>
+      </div>
+      <input type="submit" value="Anmelden" class="button">
+    </form>
+    <p id="loginError" style="color:red;"></p>
+  </div>
+  <!-- HOME -->
+  <div id="home" class="page-section">
+    <h1>Willkommen im Warenwirtschaftssystem</h1>
+    <p>Hallo <strong id="currentUserDisplay"></strong>, bitte wählen Sie eine Option aus dem Menü.</p>
+  </div>
+  <!-- Hier folgen die weiteren Seiten (Produkte, Kunden, Kategorien, Lieferanten, Aufträge, Bestellungen, Retouren, Stammdaten, Verwaltung, Bericht/Statistik, etc.)
+       – Der HTML-Code der Unterseiten bleibt unverändert.
+       Du kannst Deinen Originalcode hier einfügen. -->
+       /* -----------------------------------------
+       6) PRODUKTE
+    ----------------------------------------- */
+    function renderProducts() {
+      let html = '<table>';
+      html += '<tr><th>ID</th><th>Titel</th><th>EAN</th><th>Verkaufspreis (brutto)</th><th>Bestand</th><th>Farbe</th><th>Größe</th><th>Status</th><th>Lieferant</th><th>Aktionen</th></tr>';
+      productsData.forEach(p => {
+        const supplierName = getSupplierNameById(p.supplierId);
+        html += `<tr>
+          <td>${p.id}</td>
+          <td>${p.title}</td>
+          <td>${p.ean || ""}</td>
+          <td>${p.salePrice.toFixed(2)}</td>
+          <td>${p.stock}</td>
+          <td>${p.color || ""}</td>
+          <td>${p.size || ""}</td>
+          <td>${p.status || "Aktiv"}</td>
+          <td>${supplierName}</td>
+          <td>`;
+        if (canEditOrNewProducts()) {
+          html += `<button class="button" onclick="editProduct(${p.id}); return false;">Bearbeiten</button>`;
+        }
+        if (canDelete()) {
+          html += `<button class="button" onclick="deleteProduct(${p.id}); return false;">Löschen</button>`;
+        }
+        html += `<button class="button" onclick="detailProduct(${p.id}); return false;">Details</button>`;
+        html += `</td></tr>`;
+      });
+      html += '</table>';
+    
+      let addBtn = "";
+      if (canEditOrNewProducts()) {
+        addBtn = `<button class="button" onclick="newProduct(); return false;">Neues Produkt anlegen</button>`;
+      }
+      document.getElementById('products').innerHTML = `<h1>Produkte</h1>${addBtn}<div id="productsList">${html}</div>`;
+    }
+    function newProduct() {
+      document.querySelector('#product_form form').reset();
+      document.getElementById('productId').value = "";
+      populateProductFormSelects();
+      showSection('product_form');
+    }
+    function saveProduct(event) {
+      event.preventDefault();
+      const idField = document.getElementById('productId').value;
+      const title = document.getElementById('productTitle').value;
+      const description = document.getElementById('productDescription').value;
+      const ean = document.getElementById('productEAN').value;
+      const sku = document.getElementById('productSKU').value;
+      const unit = document.getElementById('productUnit').value;
+      const color = document.getElementById('productColor').value;
+      const size = document.getElementById('productSize').value;
+      const category = document.getElementById('productCategory').value;
+      const storageLocation = document.getElementById('productStorageLocation').value;
+      const expiryDate = document.getElementById('productExpiryDate').value;
+      const supplierId = parseInt(document.getElementById('productSupplier').value) || null;
+      const extraText = document.getElementById('productExtraText').value;
+      const purchasePrice = parseFloat(document.getElementById('productPurchasePrice').value) || 0;
+      const salePrice = parseFloat(document.getElementById('productSalePrice').value) || 0;
+      const taxRate = parseInt(document.getElementById('productTaxRate').value, 10);
+      const minStock = parseInt(document.getElementById('productMinStock').value) || 0;
+      const minOrderQty = parseInt(document.getElementById('productMinOrderQty').value) || 0;
+      const stock = parseInt(document.getElementById('productStock').value) || 0;
+      const status = document.getElementById('productStatus').value;
+      const cashView = document.getElementById('productCashView').value;
+      const promotionPrice = parseFloat(document.getElementById('productPromotionPrice').value) || 0;
+      const promotionStartDate = document.getElementById('productPromotionStartDate').value;
+      const promotionEndDate = document.getElementById('productPromotionEndDate').value;
+    
+      if (idField) {
+        let p = productsData.find(x => x.id == idField);
+        if (p) {
+          p.title = title; p.description = description; p.ean = ean; p.sku = sku; p.unit = unit;
+          p.color = color; p.size = size; p.category = category; p.storageLocation = storageLocation;
+          p.expiryDate = expiryDate; p.supplierId = supplierId; p.extraText = extraText;
+          p.purchasePrice = purchasePrice; p.salePrice = salePrice; p.taxRate = taxRate;
+          p.minStock = minStock; p.minOrderQty = minOrderQty; p.stock = stock;
+          p.status = status; p.cashView = cashView;
+          p.promotionPrice = promotionPrice; p.promotionStartDate = promotionStartDate;
+          p.promotionEndDate = promotionEndDate;
+        }
+      } else {
+        let newId = productsData.length > 0 ? Math.max(...productsData.map(x => x.id)) + 1 : 1;
+        productsData.push({
+          id: newId, title, description, ean, sku, unit, color, size, category,
+          storageLocation, expiryDate, supplierId, extraText, purchasePrice, salePrice,
+          taxRate, minStock, minOrderQty, stock, status, cashView, promotionPrice,
+          promotionStartDate, promotionEndDate
+        });
+      }
+      alert('Produkt gespeichert (Simulation)');
+      document.querySelector('#product_form form').reset();
+      renderProducts();
+      showSection('products');
+    }
+    function editProduct(id) {
+      let p = productsData.find(x => x.id === id);
+      if (p) {
+        document.getElementById('productId').value = p.id;
+        document.getElementById('productTitle').value = p.title;
+        document.getElementById('productDescription').value = p.description;
+        document.getElementById('productEAN').value = p.ean || "";
+        document.getElementById('productSKU').value = p.sku || "";
+        document.getElementById('productUnit').value = p.unit || "STK";
+        populateProductFormSelects();
+        document.getElementById('productColor').value = p.color || "";
+        document.getElementById('productSize').value = p.size || "";
+        document.getElementById('productCategory').value = p.category || "";
+        document.getElementById('productStorageLocation').value = p.storageLocation || "Standardlagerplatz";
+        document.getElementById('productExpiryDate').value = p.expiryDate || "";
+        document.getElementById('productSupplier').value = p.supplierId || "";
+        document.getElementById('productExtraText').value = p.extraText || "";
+        document.getElementById('productPurchasePrice').value = p.purchasePrice || 0;
+        document.getElementById('productSalePrice').value = p.salePrice || 0;
+        document.getElementById('productTaxRate').value = (p.taxRate !== undefined) ? p.taxRate : 19;
+        document.getElementById('productMinStock').value = p.minStock || 0;
+        document.getElementById('productMinOrderQty').value = p.minOrderQty || 0;
+        document.getElementById('productStock').value = p.stock || 0;
+        document.getElementById('productStatus').value = p.status || "Aktiv";
+        document.getElementById('productCashView').value = p.cashView || "Ja";
+        document.getElementById('productPromotionPrice').value = p.promotionPrice || 0;
+        document.getElementById('productPromotionStartDate').value = p.promotionStartDate || "";
+        document.getElementById('productPromotionEndDate').value = p.promotionEndDate || "";
+        showSection('product_form');
+      }
+    }
+    function deleteProduct(id) {
+      if (!confirm('Produkt wirklich löschen?')) return;
+      if (!canDelete()) {
+        alert("Keine Berechtigung zum Löschen!");
+        return;
+      }
+      productsData = productsData.filter(x => x.id !== id);
+      populateProductFormSelects();
+      renderProducts();
+      alert('Produkt gelöscht (Simulation) – bestehende Transaktionen bleiben unverändert.');
+    }
+    function detailProduct(id) {
+      let p = productsData.find(x => x.id === id);
+      if (!p) return;
+      const supplierName = getSupplierNameById(p.supplierId);
+      let html = `<p><strong>ID:</strong> ${p.id}</p>
+                  <p><strong>Titel:</strong> ${p.title}</p>
+                  <p><strong>Beschreibung:</strong> ${p.description}</p>
+                  <p><strong>EAN:</strong> ${p.ean || ""}</p>
+                  <p><strong>SKU:</strong> ${p.sku || ""}</p>
+                  <p><strong>Einheit:</strong> ${p.unit || "STK"}</p>
+                  <p><strong>Farbe:</strong> ${p.color || ""}</p>
+                  <p><strong>Größe:</strong> ${p.size || ""}</p>
+                  <p><strong>Kategorie:</strong> ${p.category || ""}</p>
+                  <p><strong>Lagerplatz:</strong> ${p.storageLocation || ""}</p>
+                  <p><strong>Ablaufdatum:</strong> ${p.expiryDate || ""}</p>
+                  <p><strong>Status:</strong> ${p.status || "Aktiv"}</p>
+                  <p><strong>Lieferant:</strong> ${supplierName}</p>
+                  <p><strong>Kassenansicht:</strong> ${p.cashView}</p>
+                  <p><strong>Aktionspreis:</strong> ${p.promotionPrice.toFixed(2)} €</p>
+                  <p><strong>Aktionspreis startet:</strong> ${p.promotionStartDate || ""}</p>
+                  <p><strong>Aktionspreis endet:</strong> ${p.promotionEndDate || ""}</p>`;
+      document.getElementById('productDetailsContainer').innerHTML = html;
+      showSection('product_details');
+    }
+    function populateProductFormSelects() {
+      const colorSelect = document.getElementById('productColor');
+      if (!colorSelect) return;
+      colorSelect.innerHTML = "";
+      colors.forEach(color => {
+        let opt = document.createElement('option');
+        opt.value = color;
+        opt.textContent = color;
+        colorSelect.appendChild(opt);
+      });
+      const sizeSelect = document.getElementById('productSize');
+      sizeSelect.innerHTML = "";
+      sizes.forEach(size => {
+        let opt = document.createElement('option');
+        opt.value = size;
+        opt.textContent = size;
+        sizeSelect.appendChild(opt);
+      });
+      const categorySelect = document.getElementById('productCategory');
+      categorySelect.innerHTML = "";
+      let catPlaceholder = document.createElement('option');
+      catPlaceholder.value = "";
+      catPlaceholder.textContent = "-- bitte wählen --";
+      categorySelect.appendChild(catPlaceholder);
+      categoriesData.forEach(cat => {
+        let opt = document.createElement('option');
+        opt.value = cat.name;
+        opt.textContent = cat.name;
+        categorySelect.appendChild(opt);
+      });
+      const supplierSelect = document.getElementById('productSupplier');
+      supplierSelect.innerHTML = "";
+      let emptyOpt = document.createElement('option');
+      emptyOpt.value = "";
+      emptyOpt.textContent = "-- bitte wählen --";
+      supplierSelect.appendChild(emptyOpt);
+      suppliersData.forEach(s => {
+        let opt = document.createElement('option');
+        opt.value = s.id;
+        opt.textContent = s.supplierCompanyName || s.supplierName || "Lieferant";
+        supplierSelect.appendChild(opt);
+      });
+    }
+    function getSupplierNameById(id) {
+      let s = suppliersData.find(x => x.id === id);
+      return s ? (s.supplierCompanyName || s.supplierName || "Lieferant") : "";
+    }
+    
+    /* -----------------------------------------
+       7) KUNDEN
+    ----------------------------------------- */
+    function renderCustomers() {
+      let html = '<table>';
+      html += '<tr><th>ID</th><th>Nummer</th><th>Firma / Name</th><th>Aktionen</th></tr>';
+      customersData.forEach(c => {
+        html += `<tr>
+          <td>${c.id}</td>
+          <td>${c.customerNumber || ""}</td>
+          <td>${c.customerCompanyName || ""}</td>
+          <td>`;
+        if (isVerkaeufer() || isStoreOrStv() || isAdmin()) {
+          html += `<button class="button" onclick="editCustomer(${c.id}); return false;">Bearbeiten</button>`;
+        }
+        if (canDelete() || isVerkaeufer()) {
+          html += `<button class="button" onclick="deleteCustomer(${c.id}); return false;">Löschen</button>`;
+        }
+        html += `<button class="button" onclick="detailCustomer(${c.id}); return false;">Details</button>`;
+        html += `</td></tr>`;
+      });
+      html += '</table>';
+      let addBtn = "";
+      if (isVerkaeufer() || isStoreOrStv() || isAdmin()) {
+        addBtn = `<button class="button" onclick="showSection('customer_form'); return false;">Neuer Kunde</button>`;
+      }
+      document.getElementById('customers').innerHTML = `<h1>Kunden</h1>${addBtn}<div id="customersList">${html}</div>`;
+    }
+    function saveCustomer(event) {
+      event.preventDefault();
+      const hiddenId = document.getElementById('customerInternalId').value;
+      const number = document.getElementById('customerNumber').value;
+      const companyName = document.getElementById('customerCompanyName').value;
+      const addressZusatz = document.getElementById('customerAddressZusatz').value;
+      const street = document.getElementById('customerStreet').value;
+      const zip = document.getElementById('customerZip').value;
+      const city = document.getElementById('customerCity').value;
+      const country = document.getElementById('customerCountry').value;
+      const phone1 = document.getElementById('customerPhone1').value;
+      const phone2 = document.getElementById('customerPhone2').value;
+      const fax = document.getElementById('customerFax').value;
+      const email = document.getElementById('customerEmail').value;
+      const website = document.getElementById('customerWebsite').value;
+      const ustId = document.getElementById('customerUstId').value;
+      const taxCode = document.getElementById('customerTaxCode').value;
+      const discount = parseFloat(document.getElementById('customerDiscount').value) || 0;
+      const extraText = document.getElementById('customerExtraText').value;
+    
+      if (hiddenId) {
+        let c = customersData.find(x => x.id == hiddenId);
+        if (c) {
+          c.customerNumber = number;
+          c.customerCompanyName = companyName;
+          c.customerAddressZusatz = addressZusatz;
+          c.customerStreet = street;
+          c.customerZip = zip;
+          c.customerCity = city;
+          c.customerCountry = country;
+          c.customerPhone1 = phone1;
+          c.customerPhone2 = phone2;
+          c.customerFax = fax;
+          c.customerEmail = email;
+          c.customerWebsite = website;
+          c.customerUstId = ustId;
+          c.customerTaxCode = taxCode;
+          c.customerDiscount = discount;
+          c.customerExtraText = extraText;
+        }
+      } else {
+        let newId = customersData.length > 0 ? Math.max(...customersData.map(x => x.id)) + 1 : 1;
+        customersData.push({
+          id: newId,
+          customerNumber: number,
+          customerCompanyName: companyName,
+          customerAddressZusatz: addressZusatz,
+          customerStreet: street,
+          customerZip: zip,
+          customerCity: city,
+          customerCountry: country,
+          customerPhone1: phone1,
+          customerPhone2: phone2,
+          customerFax: fax,
+          customerEmail: email,
+          customerWebsite: website,
+          customerUstId: ustId,
+          customerTaxCode: taxCode,
+          customerDiscount: discount,
+          customerExtraText: extraText
+        });
+      }
+      alert('Kunde gespeichert (Simulation)');
+      document.getElementById('customerInternalId').value = "";
+      document.querySelector('#customer_form form').reset();
+      renderCustomers();
+      showSection('customers');
+    }
+    function editCustomer(id) {
+      let c = customersData.find(x => x.id === id);
+      if (c) {
+        document.getElementById('customerInternalId').value = c.id;
+        document.getElementById('customerNumber').value = c.customerNumber || "";
+        document.getElementById('customerCompanyName').value = c.customerCompanyName || "";
+        document.getElementById('customerAddressZusatz').value = c.customerAddressZusatz || "";
+        document.getElementById('customerStreet').value = c.customerStreet || "";
+        document.getElementById('customerZip').value = c.customerZip || "";
+        document.getElementById('customerCity').value = c.customerCity || "";
+        document.getElementById('customerCountry').value = c.customerCountry || "";
+        document.getElementById('customerPhone1').value = c.customerPhone1 || "";
+        document.getElementById('customerPhone2').value = c.customerPhone2 || "";
+        document.getElementById('customerFax').value = c.customerFax || "";
+        document.getElementById('customerEmail').value = c.customerEmail || "";
+        document.getElementById('customerWebsite').value = c.customerWebsite || "";
+        document.getElementById('customerUstId').value = c.customerUstId || "";
+        document.getElementById('customerTaxCode').value = c.customerTaxCode || "";
+        document.getElementById('customerDiscount').value = c.customerDiscount || 0;
+        document.getElementById('customerExtraText').value = c.customerExtraText || "";
+        showSection('customer_form');
+      }
+    }
+    function deleteCustomer(id) {
+      if (!confirm('Kunde wirklich löschen?')) return;
+      if (!(canDelete() || isVerkaeufer())) {
+        alert("Keine Berechtigung zum Löschen!");
+        return;
+      }
+      customersData = customersData.filter(x => x.id !== id);
+      renderCustomers();
+      alert('Kunde gelöscht (Simulation) – bestehende Transaktionen bleiben unverändert.');
+    }
+    function detailCustomer(id) {
+      let c = customersData.find(x => x.id === id);
+      if (!c) return;
+      let html = `<p><strong>ID:</strong> ${c.id}</p>
+                  <p><strong>Nummer:</strong> ${c.customerNumber || ""}</p>
+                  <p><strong>Firma / Name:</strong> ${c.customerCompanyName || ""}</p>
+                  <p><strong>Adresszusatz:</strong> ${c.customerAddressZusatz || ""}</p>
+                  <p><strong>Straße:</strong> ${c.customerStreet || ""}</p>
+                  <p><strong>PLZ/Ort:</strong> ${c.customerZip || ""} ${c.customerCity || ""}</p>
+                  <p><strong>Land:</strong> ${c.customerCountry || ""}</p>
+                  <p><strong>Telefon 1:</strong> ${c.customerPhone1 || ""}</p>
+                  <p><strong>Telefon 2:</strong> ${c.customerPhone2 || ""}</p>
+                  <p><strong>Fax:</strong> ${c.customerFax || ""}</p>
+                  <p><strong>Email:</strong> ${c.customerEmail || ""}</p>
+                  <p><strong>Webseite:</strong> ${c.customerWebsite || ""}</p>
+                  <p><strong>USt-IdNr.:</strong> ${c.customerUstId || ""}</p>
+                  <p><strong>Steuercode:</strong> ${c.customerTaxCode || ""}</p>
+                  <p><strong>Rabatt (in %):</strong> ${c.customerDiscount || 0}</p>
+                  <p><strong>Zusatztext:</strong> ${c.customerExtraText || ""}</p>`;
+      document.getElementById('customerDetailsContainer').innerHTML = html;
+      showSection('customer_details');
+    }
+    
+    /* -----------------------------------------
+       8) KATEGORIEN
+    ----------------------------------------- */
+    function renderCategories() {
+      let html = '<table>';
+      html += '<tr><th>ID</th><th>Name</th><th>Aktionen</th></tr>';
+      categoriesData.forEach(cat => {
+        html += `<tr>
+          <td>${cat.id}</td>
+          <td>${cat.name}</td>
+          <td>`;
+        if (isStoreOrStv() || isAdmin()) {
+          html += `<button class="button" onclick="editCategory(${cat.id}); return false;">Bearbeiten</button>
+                   <button class="button" onclick="deleteCategory(${cat.id}); return false;">Löschen</button>`;
+        }
+        html += `<button class="button" onclick="detailCategory(${cat.id}); return false;">Details</button>`;
+        html += `</td></tr>`;
+      });
+      html += '</table>';
+      let addBtn = "";
+      if (isStoreOrStv() || isAdmin()) {
+        addBtn = `<button class="button" onclick="showSection('category_form'); return false;">Neue Kategorie</button>`;
+      }
+      document.getElementById('categories').innerHTML = `<h1>Kategorien</h1>${addBtn}<div id="categoriesList">${html}</div>`;
+    }
+    function saveCategory(event) {
+      event.preventDefault();
+      const idField = document.getElementById('categoryId').value;
+      const name = document.getElementById('categoryName').value;
+      const description = document.getElementById('categoryDescription').value;
+      if (idField) {
+        let cat = categoriesData.find(x => x.id == idField);
+        if (cat) { cat.name = name; cat.description = description; }
+      } else {
+        let newId = categoriesData.length > 0 ? Math.max(...categoriesData.map(x => x.id)) + 1 : 1;
+        categoriesData.push({ id: newId, name, description });
+      }
+      alert('Kategorie gespeichert (Simulation)');
+      document.querySelector('#category_form form').reset();
+      document.getElementById('categoryId').value = "";
+      renderCategories();
+      showSection('categories');
+    }
+    function editCategory(id) {
+      let cat = categoriesData.find(x => x.id === id);
+      if (cat) {
+        document.getElementById('categoryId').value = cat.id;
+        document.getElementById('categoryName').value = cat.name;
+        document.getElementById('categoryDescription').value = cat.description || "";
+        showSection('category_form');
+      }
+    }
+    function deleteCategory(id) {
+      if (!confirm('Kategorie wirklich löschen?')) return;
+      if (!canDelete()) {
+        alert("Keine Berechtigung zum Löschen!");
+        return;
+      }
+      categoriesData = categoriesData.filter(x => x.id !== id);
+      renderCategories();
+      alert('Kategorie gelöscht (Simulation)');
+    }
+    function detailCategory(id) {
+      let cat = categoriesData.find(x => x.id === id);
+      if (!cat) return;
+      let html = `<p><strong>ID:</strong> ${cat.id}</p>
+                  <p><strong>Name:</strong> ${cat.name}</p>
+                  <p><strong>Beschreibung:</strong> ${cat.description || ""}</p>`;
+      document.getElementById('categoryDetailsContainer').innerHTML = html;
+      showSection('category_details');
+    }
+    
+    /* -----------------------------------------
+       9) LIEFERANTEN
+    ----------------------------------------- */
+    function renderSuppliers() {
+      let html = '<table>';
+      html += '<tr><th>ID</th><th>Nummer</th><th>Firma/Name</th><th>Ort</th><th>Telefon 1</th><th>Email</th><th>Aktionen</th></tr>';
+      suppliersData.forEach(s => {
+        html += `<tr>
+          <td>${s.id}</td>
+          <td>${s.supplierNumber || ""}</td>
+          <td>${s.supplierCompanyName || ""}</td>
+          <td>${s.supplierCity || ""}</td>
+          <td>${s.supplierPhone1 || ""}</td>
+          <td>${s.supplierEmail || ""}</td>
+          <td>`;
+        if (isStoreOrStv() || isAdmin()) {
+          html += `<button class="button" onclick="editSupplier(${s.id}); return false;">Bearbeiten</button>
+                   <button class="button" onclick="deleteSupplier(${s.id}); return false;">Löschen</button>`;
+        }
+        html += `<button class="button" onclick="detailSupplier(${s.id}); return false;">Details</button>`;
+        html += `</td></tr>`;
+      });
+      html += '</table>';
+      let addBtn = "";
+      if (isStoreOrStv() || isAdmin()) {
+        addBtn = `<button class="button" onclick="showSection('supplier_form'); return false;">Neuer Lieferant</button>`;
+      }
+      document.getElementById('suppliers').innerHTML = `<h1>Lieferanten</h1>${addBtn}<div id="suppliersList">${html}</div>`;
+    }
+    function saveSupplier(event) {
+      event.preventDefault();
+      const idField = document.getElementById('supplierId').value;
+      const supplierNumber = document.getElementById('supplierNumber').value;
+      const supplierCompanyName = document.getElementById('supplierCompanyName').value;
+      const supplierAddressZusatz = document.getElementById('supplierAddressZusatz').value;
+      const supplierStreet = document.getElementById('supplierStreet').value;
+      const supplierZip = document.getElementById('supplierZip').value;
+      const supplierCity = document.getElementById('supplierCity').value;
+      const supplierCountry = document.getElementById('supplierCountry').value;
+      const supplierPhone1 = document.getElementById('supplierPhone1').value;
+      const supplierPhone2 = document.getElementById('supplierPhone2').value;
+      const supplierFax = document.getElementById('supplierFax').value;
+      const supplierEmail = document.getElementById('supplierEmail').value;
+      const supplierWebsite = document.getElementById('supplierWebsite').value;
+      const supplierUstId = document.getElementById('supplierUstId').value;
+      const supplierTaxCode = document.getElementById('supplierTaxCode').value;
+      const supplierZusatztext = document.getElementById('supplierZusatztext').value;
+      const supplierOwnCustomerNumber = document.getElementById('supplierOwnCustomerNumber').value;
+      if (idField) {
+        let s = suppliersData.find(x => x.id == idField);
+        if (s) {
+          s.supplierNumber = supplierNumber;
+          s.supplierCompanyName = supplierCompanyName;
+          s.supplierAddressZusatz = supplierAddressZusatz;
+          s.supplierStreet = supplierStreet;
+          s.supplierZip = supplierZip;
+          s.supplierCity = supplierCity;
+          s.supplierCountry = supplierCountry;
+          s.supplierPhone1 = supplierPhone1;
+          s.supplierPhone2 = supplierPhone2;
+          s.supplierFax = supplierFax;
+          s.supplierEmail = supplierEmail;
+          s.supplierWebsite = supplierWebsite;
+          s.supplierUstId = supplierUstId;
+          s.supplierTaxCode = supplierTaxCode;
+          s.supplierZusatztext = supplierZusatztext;
+          s.supplierOwnCustomerNumber = supplierOwnCustomerNumber;
+        }
+      } else {
+        let newId = suppliersData.length > 0 ? Math.max(...suppliersData.map(x => x.id)) + 1 : 1;
+        suppliersData.push({
+          id: newId,
+          supplierNumber,
+          supplierCompanyName,
+          supplierAddressZusatz,
+          supplierStreet,
+          supplierZip,
+          supplierCity,
+          supplierCountry,
+          supplierPhone1,
+          supplierPhone2,
+          supplierFax,
+          supplierEmail,
+          supplierWebsite,
+          supplierUstId,
+          supplierTaxCode,
+          supplierZusatztext,
+          supplierOwnCustomerNumber
+        });
+      }
+      alert('Lieferant gespeichert (Simulation)');
+      document.querySelector('#supplier_form form').reset();
+      renderSuppliers();
+      showSection('suppliers');
+    }
+    function editSupplier(id) {
+      let s = suppliersData.find(x => x.id === id);
+      if (s) {
+        document.getElementById('supplierId').value = s.id;
+        document.getElementById('supplierNumber').value = s.supplierNumber || "";
+        document.getElementById('supplierCompanyName').value = s.supplierCompanyName || "";
+        document.getElementById('supplierAddressZusatz').value = s.supplierAddressZusatz || "";
+        document.getElementById('supplierStreet').value = s.supplierStreet || "";
+        document.getElementById('supplierZip').value = s.supplierZip || "";
+        document.getElementById('supplierCity').value = s.supplierCity || "";
+        document.getElementById('supplierCountry').value = s.supplierCountry || "";
+        document.getElementById('supplierPhone1').value = s.supplierPhone1 || "";
+        document.getElementById('supplierPhone2').value = s.supplierPhone2 || "";
+        document.getElementById('supplierFax').value = s.supplierFax || "";
+        document.getElementById('supplierEmail').value = s.supplierEmail || "";
+        document.getElementById('supplierWebsite').value = s.supplierWebsite || "";
+        document.getElementById('supplierUstId').value = s.supplierUstId || "";
+        document.getElementById('supplierTaxCode').value = s.supplierTaxCode || "";
+        document.getElementById('supplierZusatztext').value = s.supplierZusatztext || "";
+        document.getElementById('supplierOwnCustomerNumber').value = s.supplierOwnCustomerNumber || "";
+        showSection('supplier_form');
+      }
+    }
+    function deleteSupplier(id) {
+      if (!confirm('Lieferant wirklich löschen?')) return;
+      if (!canDelete()) {
+        alert("Keine Berechtigung zum Löschen!");
+        return;
+      }
+      suppliersData = suppliersData.filter(x => x.id !== id);
+      renderSuppliers();
+      alert('Lieferant gelöscht (Simulation) – bestehende Transaktionen bleiben unverändert.');
+    }
+    function detailSupplier(id) {
+      let s = suppliersData.find(x => x.id === id);
+      if (!s) return;
+      let html = `<p><strong>ID:</strong> ${s.id}</p>
+                  <p><strong>Nummer:</strong> ${s.supplierNumber || ""}</p>
+                  <p><strong>Firma / Name:</strong> ${s.supplierCompanyName || ""}</p>
+                  <p><strong>Ort:</strong> ${s.supplierCity || ""}</p>
+                  <p><strong>Telefon 1:</strong> ${s.supplierPhone1 || ""}</p>
+                  <p><strong>Email:</strong> ${s.supplierEmail || ""}</p>`;
+      document.getElementById('supplierDetailsContainer').innerHTML = html;
+      showSection('supplier_details');
+    }
+    
+    /* -----------------------------------------
+       10) AUFTRAEGE
+    ----------------------------------------- */
+    function renderAuftraege() {
+      let html = "";
+      if (auftraegeData.length === 0) {
+        html = "<p>Keine Aufträge vorhanden.</p>";
+      } else {
+        html = '<table>';
+        html += '<tr><th>ID</th><th>Nummer</th><th>Datum</th><th>Status</th><th>Aktionen</th></tr>';
+        auftraegeData.forEach(a => {
+          html += `<tr>
+            <td>${a.id}</td>
+            <td>${a.number || ""}</td>
+            <td>${a.date || ""}</td>
+            <td>${a.status || ""}</td>
+            <td>`;
+          if (isVerkaeufer() || isStoreOrStv() || isAdmin()) {
+            html += `<button class="button" onclick="editAuftrag(${a.id}); return false;">Bearbeiten</button>`;
+          }
+          if (canDelete() || isVerkaeufer()) {
+            html += `<button class="button" onclick="deleteAuftrag(${a.id}); return false;">Löschen</button>`;
+          }
+          html += `<button class="button" onclick="detailAuftrag(${a.id}); return false;">Details</button>`;
+          html += `</td></tr>`;
+        });
+        html += '</table>';
+      }
+      let addBtn = "";
+      if (isVerkaeufer() || isStoreOrStv() || isAdmin()) {
+        addBtn = `<button class="button" onclick="newAuftrag(); return false;">Neuen Auftrag anlegen</button>`;
+      }
+      document.getElementById('auftraege').innerHTML = `<h1>Aufträge</h1>${addBtn}<div id="auftraegeList">${html}</div>`;
+    }
+    function newAuftrag() {
+      if(businessClosed){ alert("Der Geschäftstag ist abgeschlossen – keine weiteren Aufträge möglich."); return; }
+      document.querySelector('#auftrag_form form').reset();
+      document.getElementById('auftragId').value = "";
+      populateAuftragFormSelects();
+      showSection('auftrag_form');
+    }
+    function populateAuftragFormSelects() {
+      let select = document.getElementById('auftragCustomerSelect');
+      select.innerHTML = "";
+      let emptyOpt = document.createElement('option');
+      emptyOpt.value = "";
+      emptyOpt.textContent = "-- bitte wählen --";
+      select.appendChild(emptyOpt);
+      customersData.forEach(c => {
+        let opt = document.createElement('option');
+        opt.value = c.id;
+        opt.textContent = (c.customerCompanyName || "Kunde") + " (ID " + c.id + ")";
+        select.appendChild(opt);
+      });
+    }
+    function saveAuftrag(event) {
+      event.preventDefault();
+      if(businessClosed){ alert("Der Geschäftstag ist abgeschlossen – keine weiteren Aufträge möglich."); return; }
+      const idField = document.getElementById('auftragId').value;
+      const number = document.getElementById('auftragNumber').value;
+      const date = document.getElementById('auftragDate').value;
+      const customerId = parseInt(document.getElementById('auftragCustomerSelect').value) || null;
+      const status = document.getElementById('auftragStatus').value;
+      const diffAddress = document.getElementById('auftragDiffAddress').checked;
+      const shipping = document.getElementById('auftragShipping').value;
+      const shippingCost = parseFloat(document.getElementById('auftragShippingCost').value) || 0;
+      const note = document.getElementById('auftragNote').value;
+      const discount = parseFloat(document.getElementById('auftragDiscount').value) || 0;
+      let a;
+      if (idField) {
+        a = auftraegeData.find(x => x.id == idField);
+        if (a) {
+          a.number = number;
+          a.date = date;
+          a.customerId = customerId;
+          a.status = status;
+          a.diffAddress = diffAddress;
+          a.shipping = shipping;
+          a.shippingCost = shippingCost;
+          a.note = note;
+          a.discount = discount;
+        }
+      } else {
+        let newId = auftraegeData.length > 0 ? Math.max(...auftraegeData.map(x => x.id)) + 1 : 1;
+        a = { id: newId, number, date, customerId, status, diffAddress, shipping, shippingCost, note, discount, products: [] };
+        auftraegeData.push(a);
+      }
+      if (status === "erledigt") {
+        a.products.forEach(ap => {
+          let pd = productsData.find(p => p.id === ap.productId);
+          if (pd) { pd.stock = (pd.stock || 0) - ap.qty; }
+        });
+        a.transactionType = "Auftrag (Warenausgang)";
+        a.createdBy = currentUser ? currentUser.username : "Unbekannt";
+        let newTransId = transactionsData.length > 0 ? Math.max(...transactionsData.map(x => x.id)) + 1 : 1;
+        let transCopy = JSON.parse(JSON.stringify(a));
+        transCopy.id = newTransId;
+        transactionsData.push(transCopy);
+        auftraegeData = auftraegeData.filter(x => x.id !== a.id);
+        alert("Auftrag als 'erledigt' verarbeitet – Transaktion erstellt.");
+        renderAuftraege();
+        showSection('transaktionen');
+        return;
+      }
+      alert('Auftrag gespeichert (Simulation)');
+      document.querySelector('#auftrag_form form').reset();
+      renderAuftraege();
+      showSection('auftraege');
+    }
+    function editAuftrag(id) {
+      let a = auftraegeData.find(x => x.id === id);
+      if (a) {
+        document.getElementById('auftragId').value = a.id;
+        document.getElementById('auftragNumber').value = a.number || "";
+        document.getElementById('auftragDate').value = a.date || "";
+        populateAuftragFormSelects();
+        document.getElementById('auftragCustomerSelect').value = a.customerId || "";
+        document.getElementById('auftragStatus').value = a.status || "Auftrag";
+        document.getElementById('auftragDiffAddress').checked = !!a.diffAddress;
+        document.getElementById('auftragShipping').value = a.shipping || "";
+        document.getElementById('auftragShippingCost').value = a.shippingCost || 0;
+        document.getElementById('auftragNote').value = a.note || "";
+        document.getElementById('auftragDiscount').value = a.discount || 0;
+        showSection('auftrag_form');
+      }
+    }
+    function deleteAuftrag(id) {
+      if (!confirm('Auftrag wirklich löschen?')) return;
+      if (!(canDelete() || isVerkaeufer())) {
+        alert("Keine Berechtigung zum Löschen!");
+        return;
+      }
+      auftraegeData = auftraegeData.filter(x => x.id !== id);
+      renderAuftraege();
+      alert('Auftrag gelöscht (Simulation) – bestehende Transaktionen bleiben unverändert.');
+    }
+    function detailAuftrag(id) {
+      let a = auftraegeData.find(x => x.id === id);
+      if (!a) return;
+      let custName = "";
+      if (a.customerId) {
+        let c = customersData.find(cc => cc.id === a.customerId);
+        custName = c ? (c.customerCompanyName || "Kunde") : "";
+      }
+      let html = `<p><strong>ID:</strong> ${a.id}</p>
+                  <p><strong>Nummer:</strong> ${a.number || ""}</p>
+                  <p><strong>Datum:</strong> ${a.date || ""}</p>
+                  <p><strong>Kunde:</strong> ${custName}</p>
+                  <p><strong>Status:</strong> ${a.status || ""}</p>
+                  <p><strong>Abweichende Lieferadresse:</strong> ${a.diffAddress ? "Ja" : "Nein"}</p>
+                  <p><strong>Versand:</strong> ${a.shipping || ""}</p>
+                  <p><strong>Versandkosten:</strong> ${a.shippingCost.toFixed(2)}</p>
+                  <p><strong>Rabatt:</strong> ${a.discount ? a.discount.toFixed(2) + " EUR" : "0.00 EUR"}</p>
+                  <p><strong>Notiz:</strong> ${a.note || ""}</p>`;
+      if (a.products && a.products.length > 0) {
+        html += `<h3>Produkte:</h3>
+                 <table><tr><th>Produkt</th><th>Menge</th><th>Einzelpreis</th><th>Gesamt</th></tr>`;
+        let sum = 0;
+        a.products.forEach(ap => {
+          let pd = productsData.find(p => p.id === ap.productId);
+          let productName = pd ? pd.title : "Produkt?";
+          let effectivePrice = pd ? pd.salePrice : 0;
+          if (pd && pd.promotionStartDate && pd.promotionEndDate && a.date) {
+            if (a.date >= pd.promotionStartDate && a.date <= pd.promotionEndDate) {
+              effectivePrice = pd.promotionPrice;
+            }
+          }
+          let lineTotal = effectivePrice * ap.qty;
+          sum += lineTotal;
+          html += `<tr>
+                     <td>${productName}</td>
+                     <td>${ap.qty}</td>
+                     <td>${effectivePrice.toFixed(2)}</td>
+                     <td>${lineTotal.toFixed(2)}</td>
+                   </tr>`;
+        });
+        html += `</table>
+                 <p>Gesamtsumme (brutto): ${sum.toFixed(2)} EUR</p>`;
+      } else {
+        html += `<p>Keine Produkte hinzugefügt.</p>`;
+      }
+      document.getElementById('auftragDetailsContainer').innerHTML = html;
+      showSection('auftrag_details');
+    }
+    function populateAuftragProducts() {
+      const idField = document.getElementById('auftragId').value;
+      let a = auftraegeData.find(x => x.id == idField);
+      if (!a) {
+        alert("Bitte zuerst den Auftrag speichern.");
+        showSection('auftraege');
+        return;
+      }
+      renderAuftragProductsList(a);
+      let prodSelect = document.getElementById('auftragProductSelect');
+      prodSelect.innerHTML = "";
+      let emptyOpt = document.createElement('option');
+      emptyOpt.value = "";
+      emptyOpt.textContent = "-- bitte wählen --";
+      prodSelect.appendChild(emptyOpt);
+      productsData.forEach(p => {
+        let opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = p.title + " (ID " + p.id + ")";
+        prodSelect.appendChild(opt);
+      });
+      updateAuftragProductSums(a);
+    }
+    function renderAuftragProductsList(a) {
+      let container = document.getElementById('auftragProductsList');
+      if (!a.products || a.products.length === 0) {
+        container.innerHTML = "<p>Keine Produkte im Auftrag.</p>";
+        return;
+      }
+      let html = '<table><tr><th>Produkt</th><th>Menge</th><th>Einzelpreis</th><th>Gesamt</th><th>Aktionen</th></tr>';
+      a.products.forEach((ap, idx) => {
+        let pd = productsData.find(pp => pp.id === ap.productId);
+        let name = pd ? pd.title : "Unbekannt";
+        let effectivePrice = pd ? pd.salePrice : 0;
+        if (pd && pd.promotionStartDate && pd.promotionEndDate && a.date) {
+          if (a.date >= pd.promotionStartDate && a.date <= pd.promotionEndDate) {
+            effectivePrice = pd.promotionPrice;
+          }
+        }
+        let lineTotal = (effectivePrice * ap.qty).toFixed(2);
+        html += `<tr>
+                   <td>${name}</td>
+                   <td>${ap.qty}</td>
+                   <td>${effectivePrice.toFixed(2)}</td>
+                   <td>${lineTotal}</td>
+                   <td>
+                     <button class="button" type="button" onclick="removeAuftragProduct(${a.id}, ${idx}); return false;">Entfernen</button>
+                   </td>
+                 </tr>`;
+      });
+      html += '</table>';
+      document.getElementById('auftragProductsList').innerHTML = html;
+    }
+    function addAuftragProduct() {
+      const idField = document.getElementById('auftragId').value;
+      let a = auftraegeData.find(x => x.id == idField);
+      if (!a) {
+        alert("Kein Auftrag gefunden. Bitte zuerst Auftrag speichern.");
+        return;
+      }
+      let prodId = parseInt(document.getElementById('auftragProductSelect').value) || null;
+      let qty = parseInt(document.getElementById('auftragProductQty').value) || 1;
+      if (!prodId) {
+        alert("Bitte ein Produkt auswählen.");
+        return;
+      }
+      a.products.push({ productId: prodId, qty });
+      renderAuftragProductsList(a);
+      updateAuftragProductSums(a);
+    }
+    function removeAuftragProduct(auftragId, index) {
+      let a = auftraegeData.find(x => x.id == auftragId);
+      if (!a) return;
+      a.products.splice(index, 1);
+      renderAuftragProductsList(a);
+      updateAuftragProductSums(a);
+    }
+    function updateAuftragProductSums(a) {
+      let subtotalNet = 0;
+      let totalGross = 0;
+      a.products.forEach(ap => {
+        let pd = productsData.find(p => p.id === ap.productId);
+        if (pd) {
+          let effectivePrice = pd.salePrice;
+          if (pd.promotionStartDate && pd.promotionEndDate && a.date) {
+            if (a.date >= pd.promotionStartDate && a.date <= pd.promotionEndDate) {
+              effectivePrice = pd.promotionPrice;
+            }
+          }
+          let taxRate = pd.taxRate || 0;
+          let netPrice = effectivePrice / (1 + taxRate/100);
+          subtotalNet += netPrice * ap.qty;
+          totalGross += effectivePrice * ap.qty;
+        }
+      });
+      let discount = a.discount || 0;
+      let finalNet = subtotalNet - discount;
+      if (finalNet < 0) finalNet = 0;
+      let finalGross = finalNet === 0 ? 0 : finalNet + (totalGross - subtotalNet);
+      document.getElementById('auftragSubtotal').textContent = finalNet.toFixed(2) + " EUR (netto)";
+      document.getElementById('auftragTax').textContent = (finalGross - finalNet).toFixed(2) + " EUR (MwSt)";
+      document.getElementById('auftragTotal').textContent = finalGross.toFixed(2) + " EUR (brutto)";
+    }
+    
+    /* -----------------------------------------
+       11) BESTELLUNGEN
+    ----------------------------------------- */
+    function renderBestellungen() {
+      let html = "";
+      if (bestellungenData.length === 0) {
+        html = "<p>Keine Bestellungen vorhanden.</p>";
+      } else {
+        html = '<table>';
+        html += '<tr><th>ID</th><th>Bestellnummer</th><th>Datum</th><th>Status</th><th>Aktionen</th></tr>';
+        bestellungenData.forEach(b => {
+          html += `<tr>
+            <td>${b.id}</td>
+            <td>${b.number || ""}</td>
+            <td>${b.date || ""}</td>
+            <td>${b.status || ""}</td>
+            <td>`;
+          if (isVerkaeufer() || isStoreOrStv() || isAdmin()) {
+            html += `<button class="button" onclick="editBestellung(${b.id}); return false;">Bearbeiten</button>`;
+          }
+          if (canDelete()) {
+            html += `<button class="button" onclick="deleteBestellung(${b.id}); return false;">Löschen</button>`;
+          }
+          html += `<button class="button" onclick="detailBestellung(${b.id}); return false;">Details</button>`;
+          html += `</td></tr>`;
+        });
+        html += '</table>';
+      }
+      let addBtn = "";
+      if (isVerkaeufer() || isStoreOrStv() || isAdmin()) {
+        addBtn = `<button class="button" onclick="newBestellung(); return false;">Neue Bestellung anlegen</button>
+                  <button class="button" onclick="bestellungVorschlag(); return false;">Bestellvorschlag</button>`;
+      }
+      document.getElementById('bestellungen').innerHTML = `<h1>Bestellungen</h1>${addBtn}<div id="bestellungenList">${html}</div>`;
+    }
+    function newBestellung() {
+      if(businessClosed){ alert("Der Geschäftstag ist abgeschlossen – keine weiteren Bestellungen möglich."); return; }
+      let form = document.getElementById('bestellung_form').querySelector('form');
+      if(form) { form.reset(); }
+      document.getElementById('bestellungId').value = "";
+      showSection('bestellung_form');
+    }
+    function populateBestellungFormSelects() {
+      let select = document.getElementById('bestellungSupplierSelect');
+      select.innerHTML = "";
+      let emptyOpt = document.createElement('option');
+      emptyOpt.value = "";
+      emptyOpt.textContent = "-- bitte wählen --";
+      select.appendChild(emptyOpt);
+      suppliersData.forEach(s => {
+        let opt = document.createElement('option');
+        opt.value = s.id;
+        opt.textContent = s.supplierCompanyName + " (ID " + s.id + ")";
+        select.appendChild(opt);
+      });
+    }
+    function saveBestellung(event) {
+      event.preventDefault();
+      if(businessClosed){ alert("Der Geschäftstag ist abgeschlossen – keine weiteren Bestellungen möglich."); return; }
+      const idField = document.getElementById('bestellungId').value;
+      const number = document.getElementById('bestellungNumber').value;
+      const date = document.getElementById('bestellungDate').value;
+      const supplierId = parseInt(document.getElementById('bestellungSupplierSelect').value) || null;
+      const status = document.getElementById('bestellungStatus').value;
+      const note = document.getElementById('bestellungNote').value;
+      const discount = parseFloat(document.getElementById('bestellungDiscount').value) || 0;
+      let b;
+      if (idField) {
+        b = bestellungenData.find(x => x.id == idField);
+        if (b) {
+          b.number = number;
+          b.date = date;
+          b.supplierId = supplierId;
+          b.status = status;
+          b.note = note;
+          b.discount = discount;
+        }
+      } else {
+        let newId = bestellungenData.length > 0 ? Math.max(...bestellungenData.map(x => x.id)) + 1 : 1;
+        b = { id: newId, number, date, supplierId, status, note, discount, products: [] };
+        bestellungenData.push(b);
+      }
+      if (status === "geliefert") {
+        b.products.forEach(bp => {
+          let pd = productsData.find(p => p.id === bp.productId);
+          if (pd) { pd.stock = (pd.stock || 0) + bp.qty; }
+        });
+        b.transactionType = "Bestellung (Wareneingang)";
+        b.createdBy = currentUser ? currentUser.username : "Unbekannt";
+        let newTransId = transactionsData.length > 0 ? Math.max(...transactionsData.map(x => x.id)) + 1 : 1;
+        let transCopy = JSON.parse(JSON.stringify(b));
+        transCopy.id = newTransId;
+        transactionsData.push(transCopy);
+        bestellungenData = bestellungenData.filter(x => x.id !== b.id);
+        alert("Bestellung als 'geliefert' verarbeitet – Transaktion erstellt.");
+        renderBestellungen();
+        showSection('transaktionen');
+        return;
+      }
+      alert('Bestellung gespeichert (Simulation)');
+      document.querySelector('#bestellung_form form').reset();
+      renderBestellungen();
+      showSection('bestellungen');
+    }
+    function editBestellung(id) {
+      let b = bestellungenData.find(x => x.id === id);
+      if (b) {
+        document.getElementById('bestellungId').value = b.id;
+        document.getElementById('bestellungNumber').value = b.number || "";
+        document.getElementById('bestellungDate').value = b.date || "";
+        populateBestellungFormSelects();
+        document.getElementById('bestellungSupplierSelect').value = b.supplierId || "";
+        document.getElementById('bestellungStatus').value = b.status || "Angelegt";
+        document.getElementById('bestellungNote').value = b.note || "";
+        document.getElementById('bestellungDiscount').value = b.discount || 0;
+        showSection('bestellung_form');
+      }
+    }
+    function deleteBestellung(id) {
+      if (!confirm('Bestellung wirklich löschen?')) return;
+      if (!canDelete()) {
+        alert("Keine Berechtigung zum Löschen!");
+        return;
+      }
+      bestellungenData = bestellungenData.filter(x => x.id !== id);
+      renderBestellungen();
+      alert('Bestellung gelöscht (Simulation) – bestehende Transaktionen bleiben unverändert.');
+    }
+    function detailBestellung(id) {
+      let b = bestellungenData.find(x => x.id === id);
+      if (!b) return;
+      let supplierName = "";
+      if (b.supplierId) {
+        let sup = suppliersData.find(ss => ss.id === b.supplierId);
+        supplierName = sup ? sup.supplierCompanyName : "";
+      }
+      let html = `<p><strong>ID:</strong> ${b.id}</p>
+                  <p><strong>Bestellnummer:</strong> ${b.number || ""}</p>
+                  <p><strong>Datum:</strong> ${b.date || ""}</p>
+                  <p><strong>Lieferant:</strong> ${supplierName}</p>
+                  <p><strong>Status:</strong> ${b.status || ""}</p>
+                  <p><strong>Notiz:</strong> ${b.note || ""}</p>
+                  <p><strong>Rabatt:</strong> ${b.discount ? b.discount.toFixed(2) + " EUR" : "0.00 EUR"}</p>`;
+      if (b.products && b.products.length > 0) {
+        html += `<h3>Produkte:</h3>
+                 <table><tr><th>Produkt</th><th>Menge</th><th>Einzelpreis</th><th>Gesamt</th></tr>`;
+        let sum = 0;
+        b.products.forEach(bp => {
+          let pd = productsData.find(p => p.id === bp.productId);
+          let productName = pd ? pd.title : "Produkt?";
+          let linePrice = pd ? pd.purchasePrice : 0;
+          if (pd.taxRate > 0) { linePrice = linePrice * (1+pd.taxRate/100); }
+          let lineTotal = linePrice * bp.qty;
+          sum += lineTotal;
+          html += `<tr>
+                     <td>${productName}</td>
+                     <td>${bp.qty}</td>
+                     <td>${linePrice.toFixed(2)}</td>
+                     <td>${lineTotal.toFixed(2)}</td>
+                   </tr>`;
+        });
+        html += `</table>
+                 <p>Zwischensumme: ${sum.toFixed(2)} EUR</p>`;
+      } else {
+        html += `<p>Keine Produkte hinzugefügt.</p>`;
+      }
+      document.getElementById('bestellungDetailsContainer').innerHTML = html;
+      showSection('bestellung_details');
+    }
+    function populateBestellungProducts() {
+      const idField = document.getElementById('bestellungId').value;
+      let b = bestellungenData.find(x => x.id == idField);
+      if (!b) {
+        alert("Bitte zuerst die Bestellung speichern.");
+        showSection('bestellungen');
+        return;
+      }
+      renderBestellungProductsList(b);
+      let prodSelect = document.getElementById('bestellungProductSelect');
+      prodSelect.innerHTML = "";
+      let emptyOpt = document.createElement('option');
+      emptyOpt.value = "";
+      emptyOpt.textContent = "-- bitte wählen --";
+      prodSelect.appendChild(emptyOpt);
+      productsData.filter(p => p.supplierId === b.supplierId && p.status !== "Inaktiv")
+                  .forEach(p => {
+        let opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = p.title + " (ID " + p.id + ")";
+        prodSelect.appendChild(opt);
+      });
+      updateBestellungProductSums(b);
+    }
+    function renderBestellungProductsList(b) {
+      let container = document.getElementById('bestellungProductsList');
+      if (!b.products || b.products.length === 0) {
+        container.innerHTML = "<p>Keine Produkte in dieser Bestellung.</p>";
+        return;
+      }
+      let html = '<table><tr><th>Produkt</th><th>Menge</th><th>Einzelpreis</th><th>Gesamt</th><th>Aktionen</th></tr>';
+      b.products.forEach((bp, idx) => {
+        let pd = productsData.find(pp => pp.id === bp.productId);
+        let name = pd ? pd.title : "Unbekannt";
+        let price = pd ? pd.purchasePrice : 0;
+        let taxRate = pd ? pd.taxRate : 0;
+        if (taxRate > 0){ price = price * (1+taxRate/100); }
+        let lineTotal = (price * bp.qty).toFixed(2);
+        html += `<tr>
+                   <td>${name}</td>
+                   <td>${bp.qty}</td>
+                   <td>${price.toFixed(2)}</td>
+                   <td>${lineTotal}</td>
+                   <td>
+                     <button class="button" type="button" onclick="removeBestellungProduct(${b.id}, ${idx}); return false;">Entfernen</button>
+                   </td>
+                 </tr>`;
+      });
+      html += '</table>';
+      container.innerHTML = html;
+    }
+    function addBestellungProduct() {
+      const idField = document.getElementById('bestellungId').value;
+      let b = bestellungenData.find(x => x.id == idField);
+      if (!b) {
+        alert("Keine Bestellung gefunden. Bitte zuerst speichern.");
+        return;
+      }
+      let prodId = parseInt(document.getElementById('bestellungProductSelect').value) || null;
+      if (!prodId) {
+        alert("Bitte ein Produkt auswählen.");
+        return;
+      }
+      let qty = parseInt(document.getElementById('bestellungProductQty').value) || 1;
+      let pd = productsData.find(p => p.id === prodId);
+      if (!pd) { alert("Produkt nicht gefunden."); return; }
+      if (qty < pd.minOrderQty) {
+        qty = pd.minOrderQty;
+        document.getElementById('bestellungProductQty').value = qty;
+      }
+      b.products.push({ productId: prodId, qty: qty });
+      renderBestellungProductsList(b);
+      updateBestellungProductSums(b);
+    }
+    function removeBestellungProduct(bestellungId, index) {
+      let b = bestellungenData.find(x => x.id === bestellungId);
+      if (!b) return;
+      b.products.splice(index, 1);
+      renderBestellungProductsList(b);
+      updateBestellungProductSums(b);
+    }
+    function updateBestellungProductSums(b) {
+      let subtotal = 0;
+      let taxTotal = 0;
+      b.products.forEach(bp => {
+        let pd = productsData.find(p => p.id === bp.productId);
+        if (pd) {
+          let price = pd.purchasePrice;
+          let taxRate = pd.taxRate || 0;
+          if(taxRate > 0){ price = price * (1+taxRate/100); }
+          subtotal += price * bp.qty;
+          if(taxRate > 0){
+            let net = pd.purchasePrice;
+            let tax = (price - net) * bp.qty;
+            taxTotal += tax;
+          }
+        }
+      });
+      let discount = b.discount || 0;
+      let finalSubtotal = subtotal - discount;
+      if(finalSubtotal < 0) finalSubtotal = 0;
+      if(finalSubtotal === 0) taxTotal = 0;
+      let finalTotal = finalSubtotal;
+      document.getElementById('bestellungSubtotal').textContent = finalSubtotal.toFixed(2) + " EUR";
+      document.getElementById('bestellungTax').textContent = taxTotal.toFixed(2) + " EUR";
+      document.getElementById('bestellungTotal').textContent = finalTotal.toFixed(2) + " EUR";
+    }
+    // Neuer Bestellvorschlag: fügt alle Produkte hinzu, bei denen der Bestand unter dem Mindestbestand liegt
+    function bestellungVorschlag() {
+      const idField = document.getElementById('bestellungId').value;
+      let b = bestellungenData.find(x => x.id == idField);
+      if (!b) {
+        alert("Keine Bestellung gefunden. Bitte zuerst speichern.");
+        return;
+      }
+      if (!b.supplierId) {
+        alert("Bitte zuerst einen Lieferanten auswählen und speichern.");
+        return;
+      }
+      let candidateProducts = productsData.filter(p => p.supplierId === b.supplierId && p.stock < p.minStock && p.status !== "Inaktiv");
+      candidateProducts.forEach(p => {
+        let exists = b.products.find(bp => bp.productId === p.id);
+        if (!exists) { b.products.push({ productId: p.id, qty: p.minOrderQty || 1 }); }
+      });
+      renderBestellungProductsList(b);
+      updateBestellungProductSums(b);
+    }
+    
+    /* -----------------------------------------
+       12) TRANSAKTIONEN
+    ----------------------------------------- */
+    function computeTransactionTotals(t) {
+      let netSum = 0;
+      let taxSum = 0;
+      let discount = t.discount || 0;
+      let reason = t.retoureReason || "";
+      let lines = [];
+      if (!t.products) return { net:0, tax:0, gross:0, lines:[] };
+      t.products.forEach(tp => {
+        let pd = productsData.find(p => p.id === tp.productId);
+        if (!pd) return;
+        let qty = tp.qty;
+        let effectiveGross = 0;
+        let taxRate = pd.taxRate || 0;
+        if (t.transactionType.startsWith("Auftrag")) {
+          effectiveGross = pd.salePrice;
+          if (pd.promotionStartDate && pd.promotionEndDate && t.date) {
+            if (t.date >= pd.promotionStartDate && t.date <= pd.promotionEndDate) {
+              effectiveGross = pd.promotionPrice;
+            }
+          }
+        } else if (t.transactionType.startsWith("Bestellung")) {
+          effectiveGross = pd.purchasePrice;
+        } else if (t.transactionType === "Retoure") {
+          if (["Fehlkauf", "Garantie", "Rückruf", "Sonstiges"].includes(reason)) {
+            effectiveGross = pd.salePrice;
+            if (pd.promotionStartDate && pd.promotionEndDate && t.retourePurchaseDate) {
+              if (t.retourePurchaseDate >= pd.promotionStartDate && t.retourePurchaseDate <= pd.promotionEndDate) {
+                effectiveGross = pd.promotionPrice;
+              }
+            }
+          } else {
+            effectiveGross = pd.purchasePrice;
+          }
+        }
+        let netPrice = 0;
+        if (t.transactionType.startsWith("Auftrag") || (t.transactionType==="Retoure" && ["Fehlkauf","Garantie","Rückruf","Sonstiges"].includes(reason))) {
+          netPrice = taxRate > 0 ? (effectiveGross / (1+taxRate/100)) : effectiveGross;
+        } else {
+          netPrice = effectiveGross;
+        }
+        let lineNet = netPrice * qty;
+        netSum += lineNet;
+        lines.push({ productTitle: pd.title, qty: qty, netUnit: netPrice, taxRate: taxRate });
+      });
+      let finalNet = netSum - discount;
+      if(finalNet < 0) finalNet = 0;
+      lines.forEach(line => {
+        let lineNet = line.netUnit * line.qty;
+        let ratio = netSum === 0 ? 0 : (lineNet / netSum);
+        let discountedLineNet = ratio * finalNet;
+        let lineTax = discountedLineNet * (line.taxRate/100);
+        taxSum += lineTax;
+      });
+      if(finalNet === 0) taxSum = 0;
+      let finalGross = finalNet + taxSum;
+      return { net: finalNet, tax: taxSum, gross: finalGross, lines: lines };
+    }
+    function renderTransaktionen() {
+      let sorted = transactionsData.slice().sort((a, b) => b.id - a.id).slice(0,200);
+      let html = "";
+      if (sorted.length === 0) {
+        html = "<p>Keine Transaktionen vorhanden.</p>";
+      } else {
+        html = '<table>';
+        html += '<tr><th>ID</th><th>Typ</th><th>Nummer</th><th>Datum</th><th>Aktionen</th></tr>';
+        sorted.forEach(t => {
+          html += `<tr>
+            <td>${t.id}</td>
+            <td>${t.transactionType}</td>
+            <td>${t.number || ""}</td>`;
+          let dateDisplay = (t.transactionType === "Retoure" && t.retoureDate) ? t.retoureDate : (t.date || "");
+          html += `<td>${dateDisplay}</td>
+            <td>
+              <button class="button" onclick="detailTransaction(${t.id}); return false;">Details</button>
+            </td>
+          </tr>`;
+        });
+        html += '</table>';
+      }
+      document.getElementById('transaktionen').innerHTML = `<h1>Transaktionen</h1><div id="transaktionenList">${html}</div>`;
+    }
+    function detailTransaction(id) {
+      let t = transactionsData.find(x => x.id === id);
+      if (!t) { alert("Keine Transaktion gefunden."); return; }
+      let { net, tax, gross, lines } = computeTransactionTotals(t);
+      let discount = t.discount || 0;
+      let reason = t.retoureReason || "";
+      let createdBy = t.createdBy || "Unbekannt";
+      let html = `<h2>Transaktionsdetails</h2>`;
+      html += `<p><strong>ID:</strong> ${t.id}</p>`;
+      html += `<p><strong>Typ:</strong> ${t.transactionType}</p>`;
+      if(t.number) { html += `<p><strong>Nummer:</strong> ${t.number}</p>`; }
+      if (t.transactionType === "Retoure") {
+        html += `<p><strong>Retourennummer:</strong> ${t.retoureNumber || ""}</p>`;
+      }
+      let dateDisplay = (t.transactionType === "Retoure" && t.retoureDate) ? t.retoureDate : (t.date || "");
+      html += `<p><strong>Datum:</strong> ${dateDisplay}</p>`;
+      html += `<p><strong>Angelegt von:</strong> ${createdBy}</p>`;
+      if(reason) {
+        html += `<p><strong>Retourengrund:</strong> ${reason}</p>`;
+      }
+      if (t.customerId) {
+        let c = customersData.find(x => x.id === t.customerId);
+        if (c) { html += `<p><strong>Kunde:</strong> ${c.customerCompanyName || c.customerNumber || "Kunde"} (ID ${c.id})</p>`; }
+      }
+      if (t.supplierId) {
+        let s = suppliersData.find(x => x.id === t.supplierId);
+        if (s) { html += `<p><strong>Lieferant:</strong> ${s.supplierCompanyName || s.supplierNumber || "Lieferant"} (ID ${s.id})</p>`; }
+      }
+      if (t.shipping) { html += `<p><strong>Versand:</strong> ${t.shipping}</p>`; }
+      if (t.note) { html += `<p><strong>Notiz:</strong> ${t.note}</p>`; }
+      if (t.products && t.products.length > 0) {
+        html += `<h3>Produkte:</h3>
+                 <table><tr><th>Produkt</th><th>Menge</th><th>Einzelpreis (netto)</th><th>Summe (netto)</th></tr>`;
+        lines.forEach(line => {
+          let lineTotal = line.netUnit * line.qty;
+          html += `<tr>
+                     <td>${line.productTitle}</td>
+                     <td>${line.qty}</td>
+                     <td>${line.netUnit.toFixed(2)}</td>
+                     <td>${lineTotal.toFixed(2)}</td>
+                   </tr>`;
+        });
+        html += `</table>`;
+        if(discount > 0) { html += `<p>Rabatt: -${discount.toFixed(2)} EUR (von der Nettosumme)</p>`; }
+        html += `<p>Zwischensumme (netto) nach Rabatt: ${net.toFixed(2)} EUR</p>`;
+        html += `<p>MwSt: ${tax.toFixed(2)} EUR</p>`;
+        html += `<p><strong>Gesamtsumme (brutto): ${gross.toFixed(2)} EUR</strong></p>`;
+      } else {
+        html += `<p>Keine Produkte enthalten.</p>`;
+      }
+      document.getElementById('transactionDetailsContainer').innerHTML = html;
+      showSection('transaction_details');
+    }
+    
+    /* -----------------------------------------
+       13) RETOUREN
+    ----------------------------------------- */
+    function newRetoure() {
+      if(businessClosed){ alert("Der Geschäftstag ist abgeschlossen – keine Retouren möglich."); return; }
+      document.querySelector('#retoure_form form').reset();
+      currentRetoure = { id: null, retoureNumber: "", retoureDate: "", retourePurchaseDate: "", retoureReason: "", discount: 0, products: [] };
+      showSection('retoure_form');
+    }
+    function saveRetoureHeader(event) {
+      event.preventDefault();
+      currentRetoure.retoureNumber = document.getElementById('retoureNumber').value;
+      currentRetoure.retoureDate = document.getElementById('retoureDate').value;
+      currentRetoure.retourePurchaseDate = document.getElementById('retourePurchaseDate').value;
+      currentRetoure.retoureReason = document.getElementById('retoureReason').value;
+      currentRetoure.discount = parseFloat(document.getElementById('retoureDiscount').value) || 0;
+      currentRetoure.products = [];
+      showSection('retoure_products');
+    }
+    function populateRetoureProducts() {
+      let prodSelect = document.getElementById('retoureProductSelect');
+      prodSelect.innerHTML = "";
+      let emptyOpt = document.createElement('option');
+      emptyOpt.value = "";
+      emptyOpt.textContent = "-- bitte wählen --";
+      prodSelect.appendChild(emptyOpt);
+      productsData.forEach(p => {
+        let opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = p.title + " (ID " + p.id + ")";
+        prodSelect.appendChild(opt);
+      });
+      updateRetoureProductSums();
+    }
+    function addRetoureProduct() {
+      let prodId = parseInt(document.getElementById('retoureProductSelect').value) || null;
+      let qty = parseInt(document.getElementById('retoureProductQty').value) || 1;
+      if (!prodId) { alert("Bitte ein Produkt auswählen."); return; }
+      currentRetoure.products.push({ productId: prodId, qty: qty });
+      renderRetoureProductsList();
+      updateRetoureProductSums();
+    }
+    function renderRetoureProductsList() {
+      let container = document.getElementById('retoureProductsList');
+      if (!currentRetoure.products || currentRetoure.products.length === 0) {
+        container.innerHTML = "<p>Keine Produkte in dieser Retoure.</p>";
+        return;
+      }
+      let html = '<table><tr><th>Produkt</th><th>Menge</th><th>Einzelpreis (netto)</th><th>Gesamt (netto)</th><th>Aktionen</th></tr>';
+      currentRetoure.products.forEach((rp, idx) => {
+        let pd = productsData.find(p => p.id === rp.productId);
+        let name = pd ? pd.title : "Unbekannt";
+        let reason = currentRetoure.retoureReason;
+        let effectiveGross = 0;
+        let taxRate = pd ? pd.taxRate : 0;
+        if (["Fehlkauf", "Garantie", "Rückruf", "Sonstiges"].includes(reason)) {
+          effectiveGross = pd ? pd.salePrice : 0;
+          if (pd && pd.promotionStartDate && pd.promotionEndDate && currentRetoure.retourePurchaseDate) {
+            if (currentRetoure.retourePurchaseDate >= pd.promotionStartDate && currentRetoure.retourePurchaseDate <= pd.promotionEndDate) {
+              effectiveGross = pd.promotionPrice;
+            }
+          }
+          var netPrice = taxRate > 0 ? (effectiveGross/(1+taxRate/100)) : effectiveGross;
+        } else {
+          effectiveGross = pd ? pd.purchasePrice : 0;
+          var netPrice = effectiveGross;
+        }
+        let lineTotal = netPrice * rp.qty;
+        html += `<tr>
+                   <td>${name}</td>
+                   <td>${rp.qty}</td>
+                   <td>${netPrice.toFixed(2)}</td>
+                   <td>${lineTotal.toFixed(2)}</td>
+                   <td><button class="button" type="button" onclick="removeRetoureProduct(${idx}); return false;">Entfernen</button></td>
+                 </tr>`;
+      });
+      html += '</table>';
+      document.getElementById('retoureProductsList').innerHTML = html;
+    }
+    function removeRetoureProduct(index) {
+      currentRetoure.products.splice(index, 1);
+      renderRetoureProductsList();
+      updateRetoureProductSums();
+    }
+    function updateRetoureProductSums() {
+      let reason = currentRetoure.retoureReason;
+      let discount = currentRetoure.discount || 0;
+      let netSum = 0;
+      currentRetoure.products.forEach(rp => {
+        let pd = productsData.find(p => p.id === rp.productId);
+        if (!pd) return;
+        let qty = rp.qty;
+        let taxRate = pd.taxRate || 0;
+        let netP = 0;
+        if (["Fehlkauf","Garantie","Rückruf","Sonstiges"].includes(reason)) {
+          let gross = pd.salePrice;
+          if (pd.promotionStartDate && pd.promotionEndDate && currentRetoure.retourePurchaseDate) {
+            if (currentRetoure.retourePurchaseDate >= pd.promotionStartDate && currentRetoure.retourePurchaseDate <= pd.promotionEndDate) {
+              gross = pd.promotionPrice;
+            }
+          }
+          netP = taxRate > 0 ? (gross/(1+taxRate/100)) : gross;
+        } else {
+          netP = pd.purchasePrice;
+        }
+        netSum += netP * rp.qty;
+      });
+      let finalNet = netSum - discount;
+      if (finalNet < 0) finalNet = 0;
+      let taxSum = 0;
+      currentRetoure.products.forEach(rp => {
+        let pd = productsData.find(x => x.id === rp.productId);
+        if (!pd) return;
+        let taxRate = pd.taxRate || 0;
+        let lineGross = 0;
+        if (["Fehlkauf","Garantie","Rückruf","Sonstiges"].includes(reason)) {
+          lineGross = pd.salePrice;
+        } else {
+          lineGross = pd.purchasePrice;
+        }
+        let lineRatio = netSum===0 ? 0 : ((lineGross*rp.qty) / netSum);
+        let discountedLineNet = lineRatio * finalNet;
+        let lineTax = discountedLineNet * (taxRate/100);
+        taxSum += lineTax;
+      });
+      if(finalNet === 0) taxSum = 0;
+      let finalTotal = finalNet + taxSum;
+      document.getElementById('retoureSubtotal').textContent = finalNet.toFixed(2) + " EUR";
+      document.getElementById('retoureTax').textContent = taxSum.toFixed(2) + " EUR";
+      document.getElementById('retoureTotal').textContent = finalTotal.toFixed(2) + " EUR";
+    }
+    function bookRetoure() {
+      if(businessClosed){ alert("Der Geschäftstag ist abgeschlossen – keine Retouren möglich."); return; }
+      let reason = currentRetoure.retoureReason;
+      currentRetoure.products.forEach(rp => {
+        let pd = productsData.find(p => p.id === rp.productId);
+        if (pd) {
+          if (["Fehlkauf","Garantie","Rückruf","Sonstiges"].includes(reason)) {
+            pd.stock = (pd.stock || 0) + rp.qty;
+          } else {
+            pd.stock = (pd.stock || 0) - rp.qty;
+          }
+        }
+      });
+      currentRetoure.transactionType = "Retoure";
+      currentRetoure.createdBy = currentUser ? currentUser.username : "Unbekannt";
+      let newTransId = transactionsData.length > 0 ? Math.max(...transactionsData.map(x => x.id)) + 1 : 1;
+      let transCopy = JSON.parse(JSON.stringify(currentRetoure));
+      transCopy.id = newTransId;
+      transactionsData.push(transCopy);
+      alert("Retoure gebucht – Transaktion erstellt.");
+      document.querySelector('#retoure_form form').reset();
+      document.getElementById('retoureProductsList').innerHTML = "";
+      currentRetoure = { id: null, retoureNumber: "", retoureDate: "", retourePurchaseDate: "", retoureReason: "", discount: 0, products: [] };
+      showSection('retouren');
+    }
+    
+    /* -----------------------------------------
+       14) TAGESABSCHLUSS
+    ----------------------------------------- */
+    function showTagesabschlussConfirm() {
+      showSection('tagesabschluss_confirm');
+    }
+    function createTagesabschluss() {
+      if(businessClosed){
+        alert("Der Geschäftstag wurde bereits abgeschlossen.");
+        return;
+      }
+      businessClosed = true;
+      let totalAuftrag = 0, totalBestellung = 0, totalRetoure = 0;
+      transactionsData.forEach(t => {
+        if(t.transactionType.startsWith("Auftrag")){
+          t.products.forEach(tp => {
+            let pd = productsData.find(p => p.id === tp.productId);
+            if(pd){
+              let price = pd.salePrice;
+              if(pd.promotionStartDate && pd.promotionEndDate && t.date){
+                if(t.date >= pd.promotionStartDate && t.date <= pd.promotionEndDate){
+                  price = pd.promotionPrice;
+                }
+              }
+              totalAuftrag += price * tp.qty;
+            }
+          });
+        } else if(t.transactionType.startsWith("Bestellung")){
+          t.products.forEach(tp => {
+            let pd = productsData.find(p => p.id === tp.productId);
+            if(pd){
+              let price = pd.purchasePrice;
+              let tr = pd.taxRate || 0;
+              if(tr > 0){ price = price * (1+tr/100); }
+              totalBestellung += price * tp.qty;
+            }
+          });
+        } else if(t.transactionType === "Retoure"){
+          t.products.forEach(tp => {
+            let pd = productsData.find(p => p.id === tp.productId);
+            if(pd){
+              let reason = t.retoureReason || "";
+              if(["Fehlkauf","Garantie","Rückruf","Sonstiges"].includes(reason)){
+                let price = pd.salePrice;
+                let tr = pd.taxRate || 0;
+                if(pd.promotionStartDate && pd.promotionEndDate && t.retourePurchaseDate){
+                  if(t.retourePurchaseDate >= pd.promotionStartDate && t.retourePurchaseDate <= pd.promotionEndDate){
+                    price = pd.promotionPrice;
+                  }
+                }
+                if(tr>0){ price = price/(1+tr/100); }
+                totalRetoure += price * tp.qty;
+              } else {
+                let price = pd.purchasePrice;
+                totalRetoure += price * tp.qty;
+              }
+            }
+          });
+        }
+      });
+      let bestandsunterschied = totalAuftrag - totalBestellung - totalRetoure;
+      let summaryHtml = `<p><strong>Auftragsumsatz (brutto):</strong> ${totalAuftrag.toFixed(2)} EUR</p>`;
+      summaryHtml += `<p><strong>Bestellumsatz (brutto):</strong> ${totalBestellung.toFixed(2)} EUR</p>`;
+      summaryHtml += `<p><strong>Retourensumme (netto):</strong> ${totalRetoure.toFixed(2)} EUR</p>`;
+      summaryHtml += `<p><strong>Bestandsunterschiede:</strong> ${bestandsunterschied.toFixed(2)} EUR</p>`;
+      summaryHtml += `<p>Geschäftstag abgeschlossen. Weitere Transaktionen sind bis 0:01 Uhr am nächsten Tag nicht möglich.</p>`;
+      document.getElementById('tagesabschlussContainer').innerHTML = summaryHtml;
+      showSection('tagesabschluss');
+    }
+    function renderTagesabschluss() {
+      if(businessClosed){
+        if(document.getElementById('tagesabschlussContainer').innerHTML === ""){
+          document.getElementById('tagesabschlussContainer').innerHTML = "<p>Tagesabschluss wurde erstellt.</p>";
+        }
+      } else {
+        document.getElementById('tagesabschlussContainer').innerHTML = "<p>Kein Tagesabschluss erstellt.</p>";
+      }
+    }
+    
+    /* -----------------------------------------
+       15) BERICHT / STATISTIK
+    ----------------------------------------- */
+    function generateReport(event) {
+      event.preventDefault();
+      let from = document.getElementById('reportFrom').value;
+      let to = document.getElementById('reportTo').value;
+      let type = document.getElementById('reportType').value;
+      let result = "";
+      if (!from || !to) { alert("Bitte beide Datumsfelder ausfüllen."); return; }
+      let filtered = transactionsData.filter(t => {
+        let d = t.date || t.retoureDate || "";
+        return d >= from && d <= to;
+      });
+      if(type === "Retouren"){
+        let retours = filtered.filter(t => t.transactionType === "Retoure");
+        let reasonMap = {};
+        retours.forEach(t => {
+          let reason = t.retoureReason || "Unbekannt";
+          t.products.forEach(tp => {
+            let pd = productsData.find(p => p.id === tp.productId);
+            if(pd){
+              let price = pd.salePrice;
+              let tr = pd.taxRate || 0;
+              if(tr > 0){ price = price / (1+tr/100); }
+              let totalLine = price * tp.qty;
+              if(reasonMap[reason]) {
+                reasonMap[reason].count += tp.qty;
+                reasonMap[reason].sum += totalLine;
+              } else {
+                reasonMap[reason] = { count: tp.qty, sum: totalLine };
+              }
+            }
+          });
+        });
+        result += `<h3>Retourenbericht</h3>`;
+        result += `<p>Gesamtanzahl Retouren: ${retours.length}</p>`;
+        result += `<ul>`;
+        for(let reason in reasonMap){
+          result += `<li>${reason}: ${reasonMap[reason].count} Produkte, Summe netto: ${reasonMap[reason].sum.toFixed(2)} EUR</li>`;
+        }
+        result += `</ul>`;
+      } else if(type === "Bestellungen"){
+        let best = filtered.filter(t => t.transactionType.startsWith("Bestellung"));
+        let totalVolume = 0;
+        best.forEach(t => {
+          t.products.forEach(tp => {
+            let pd = productsData.find(p => p.id === tp.productId);
+            if(pd){
+              let price = pd.purchasePrice;
+              let tr = pd.taxRate || 0;
+              if(tr > 0){ price = price * (1+tr/100); }
+              totalVolume += price * tp.qty;
+            }
+          });
+        });
+        result += `<h3>Bestellbericht</h3>`;
+        result += `<p>Gesamtanzahl Bestellungen: ${best.length}</p>`;
+        result += `<p>Gesamtvolumen: ${totalVolume.toFixed(2)} EUR</p>`;
+      } else if(type === "Auftraege"){
+        let auf = filtered.filter(t => t.transactionType.startsWith("Auftrag"));
+        let totalVolume = 0;
+        auf.forEach(t => {
+          t.products.forEach(tp => {
+            let pd = productsData.find(p => p.id === tp.productId);
+            if(pd){
+              let price = pd.salePrice;
+              if(pd.promotionStartDate && pd.promotionEndDate && t.date){
+                if(t.date >= pd.promotionStartDate && t.date <= pd.promotionEndDate){ price = pd.promotionPrice; }
+              }
+              totalVolume += price * tp.qty;
+            }
+          });
+        });
+        result += `<h3>Auftragsbericht</h3>`;
+        result += `<p>Gesamtanzahl Aufträge: ${auf.length}</p>`;
+        result += `<p>Gesamtvolumen: ${totalVolume.toFixed(2)} EUR</p>`;
+      } else if(type === "Umsatz"){
+        let auf = filtered.filter(t => t.transactionType.startsWith("Auftrag"));
+        let netSum = 0, taxSum = 0, grossSum = 0;
+        auf.forEach(t => {
+          let prodNet = 0, prodGross = 0;
+          t.products.forEach(tp => {
+            let pd = productsData.find(p => p.id === tp.productId);
+            if(pd){
+              let effectivePrice = pd.salePrice;
+              if(pd.promotionStartDate && pd.promotionEndDate && t.date){
+                if(t.date >= pd.promotionStartDate && t.date <= pd.promotionEndDate){ effectivePrice = pd.promotionPrice; }
+              }
+              let taxRate = pd.taxRate || 0;
+              let netPrice = taxRate > 0 ? (effectivePrice / (1+taxRate/100)) : effectivePrice;
+              prodNet += netPrice * tp.qty;
+              prodGross += effectivePrice * tp.qty;
+            }
+          });
+          let finalNet = prodNet - (t.discount || 0);
+          if(finalNet < 0) finalNet = 0;
+          let effectiveTax = finalNet === 0 ? 0 : (prodGross - prodNet);
+          netSum += finalNet;
+          taxSum += effectiveTax;
+          grossSum += (finalNet + effectiveTax);
+        });
+        result += `<h3>Umsatzbericht</h3>`;
+        result += `<p>Nettoumsatz: ${netSum.toFixed(2)} EUR</p>`;
+        result += `<p>MwSt: ${taxSum.toFixed(2)} EUR</p>`;
+        result += `<p>Bruttoumsatz: ${grossSum.toFixed(2)} EUR</p>`;
+      } else if(type === "Produkte"){
+        result += `<h3>Produkte</h3>`;
+        if(productsData.length === 0){
+          result += "<p>Keine Produkte vorhanden.</p>";
+        } else {
+          result += "<ul>";
+          productsData.forEach(p => { result += `<li>ID ${p.id}: ${p.title}</li>`; });
+          result += "</ul>";
+        }
+      } else if(type === "Kategorien"){
+        result += `<h3>Kategorien</h3>`;
+        if(categoriesData.length === 0){
+          result += "<p>Keine Kategorien vorhanden.</p>";
+        } else {
+          result += "<ul>";
+          categoriesData.forEach(c => { result += `<li>ID ${c.id}: ${c.name}</li>`; });
+          result += "</ul>";
+        }
+      } else if(type === "Lieferanten"){
+        result += `<h3>Lieferanten</h3>`;
+        if(suppliersData.length === 0){
+          result += "<p>Keine Lieferanten vorhanden.</p>";
+        } else {
+          result += "<ul>";
+          suppliersData.forEach(s => { result += `<li>ID ${s.id}: ${s.supplierCompanyName}</li>`; });
+          result += "</ul>";
+        }
+      } else if(type === "Kunden"){
+        result += `<h3>Kunden</h3>`;
+        if(customersData.length === 0){
+          result += "<p>Keine Kunden vorhanden.</p>";
+        } else {
+          result += "<ul>";
+          customersData.forEach(c => { result += `<li>ID ${c.id}: ${c.customerCompanyName}</li>`; });
+          result += "</ul>";
+        }
+      } else if(type === "UmsatzKategorie"){
+        let umsatzByCat = {};
+        filtered.filter(t => t.transactionType.startsWith("Auftrag")).forEach(t => {
+          t.products.forEach(tp => {
+            let pd = productsData.find(p => p.id === tp.productId);
+            if(pd){
+              let cat = pd.category || "Ohne Kategorie";
+              let price = pd.salePrice;
+              if(pd.promotionStartDate && pd.promotionEndDate && t.date){
+                if(t.date >= pd.promotionStartDate && t.date <= pd.promotionEndDate){ price = pd.promotionPrice; }
+              }
+              umsatzByCat[cat] = (umsatzByCat[cat] || 0) + price * tp.qty;
+            }
+          });
+        });
+        result += "<h3>Umsatz nach Kategorie</h3><ul>";
+        for(let cat in umsatzByCat){
+          result += `<li>${cat}: ${umsatzByCat[cat].toFixed(2)} EUR</li>`;
+        }
+        result += "</ul>";
+      } else if(type === "UmsatzProdukt"){
+        let umsatzByProd = {};
+        filtered.filter(t => t.transactionType.startsWith("Auftrag")).forEach(t => {
+          t.products.forEach(tp => {
+            let pd = productsData.find(p => p.id === tp.productId);
+            if(pd){
+              let name = pd.title;
+              let price = pd.salePrice;
+              if(pd.promotionStartDate && pd.promotionEndDate && t.date){
+                if(t.date >= pd.promotionStartDate && t.date <= pd.promotionEndDate){ price = pd.promotionPrice; }
+              }
+              umsatzByProd[name] = (umsatzByProd[name] || 0) + price * tp.qty;
+            }
+          });
+        });
+        result += "<h3>Umsatz nach Produkt</h3><ul>";
+        for(let prod in umsatzByProd){
+          result += `<li>${prod}: ${umsatzByProd[prod].toFixed(2)} EUR</li>`;
+        }
+        result += "</ul>";
+      }
+      document.getElementById('searchResults').innerHTML = result;
+    }
+    
+    /* -----------------------------------------
+       17) BENUTZERVERWALTUNG
+    ----------------------------------------- */
+    function renderBenutzer() {
+      let html = '<table>';
+      html += '<tr><th>Benutzername</th><th>Name</th><th>Rolle</th><th>Aktionen</th></tr>';
+      usersData.forEach(u => {
+        html += `<tr>
+          <td>${u.username}</td>
+          <td>${u.name}</td>
+          <td>${u.role}</td>
+          <td>`;
+        if (isAdmin()) {
+          html += `<button class="button" onclick="editUser('${u.username}'); return false;">Bearbeiten</button>`;
+          if (currentUser && currentUser.username !== u.username) {
+            html += `<button class="button" onclick="deleteUser('${u.username}'); return false;">Löschen</button>`;
+          }
+        }
+        html += `</td></tr>`;
+      });
+      html += '</table>';
+      let addBtn = "";
+      if (isAdmin()) {
+        addBtn = `<button class="button" onclick="newUser(); return false;">Neuen Benutzer anlegen</button>`;
+      }
+      document.getElementById('benutzerverwaltung').innerHTML = `<h1>Benutzerverwaltung</h1>${addBtn}<div id="benutzerListe">${html}</div>`;
+    }
+    function saveUser(event) {
+      event.preventDefault();
+      const username = document.getElementById('userUsername').value;
+      const name = document.getElementById('userName').value;
+      const password = document.getElementById('userPassword').value;
+      const role = document.getElementById('userRole').value;
+      let existing = usersData.find(u => u.username === username);
+      if(existing) {
+        existing.name = name;
+        if(password.trim() !== "") { existing.password = password; }
+        existing.role = role;
+      } else {
+        usersData.push({ username, name, password, role });
+      }
+      alert("Benutzer gespeichert (Simulation)");
+      document.querySelector('#user_form form').reset();
+      renderBenutzer();
+      showSection('benutzerverwaltung');
+    }
+    function editUser(username) {
+      let u = usersData.find(user => user.username === username);
+      if(u) {
+        document.getElementById('userUsername').value = u.username;
+        document.getElementById('userUsername').disabled = true;
+        document.getElementById('userName').value = u.name;
+        document.getElementById('userPassword').value = "";
+        document.getElementById('userRole').value = u.role;
+        showSection('user_form');
+      }
+    }
+    function deleteUser(username) {
+      if(!isAdmin()) {
+        alert("Keine Berechtigung zum Löschen!");
+        return;
+      }
+      if(!confirm("Benutzer wirklich löschen?")) return;
+      usersData = usersData.filter(u => u.username !== username);
+      renderBenutzer();
+    }
+    function newUser() {
+      document.querySelector('#user_form form').reset();
+      document.getElementById('userUsername').disabled = false;
+      showSection('user_form');
+    }
+    
+    /* -----------------------------------------
+       18) STAMMDATEN (Impressum)
+    ----------------------------------------- */
+    function renderMasterdata() {
+      let html = `<p><strong>Firma:</strong> ${masterData.companyName}</p>
+                  <p><strong>Adresse:</strong> ${masterData.street}, ${masterData.zip} ${masterData.city}, ${masterData.country}</p>
+                  <p><strong>Telefon:</strong> ${masterData.phone1}</p>
+                  <p><strong>Email:</strong> ${masterData.email}</p>
+                  <p><strong>Website:</strong> ${masterData.website}</p>`;
+      let editBtn = "";
+      if (canEditOrNewMasterdata()) {
+        editBtn = `<button class="button" onclick="editMasterdata(); return false;">Bearbeiten</button>`;
+      }
+      document.getElementById('masterdata').innerHTML = `
+        <h1>Stammdaten (Impressum)</h1>
+        <div id="masterdataContainer">${html}</div>
+        ${editBtn}
+      `;
+    }
+    function renderMasterdataForm() {
+      document.getElementById('mdf_companyName').value = masterData.companyName;
+      document.getElementById('mdf_addressZusatz').value = masterData.addressZusatz;
+      document.getElementById('mdf_street').value = masterData.street;
+      document.getElementById('mdf_zip').value = masterData.zip;
+      document.getElementById('mdf_city').value = masterData.city;
+      document.getElementById('mdf_country').value = masterData.country;
+      document.getElementById('mdf_phone1').value = masterData.phone1;
+      document.getElementById('mdf_phone2').value = masterData.phone2;
+      document.getElementById('mdf_fax').value = masterData.fax;
+      document.getElementById('mdf_email').value = masterData.email;
+      document.getElementById('mdf_website').value = masterData.website;
+      document.getElementById('mdf_ustId').value = masterData.ustId;
+      document.getElementById('mdf_taxCode').value = masterData.taxCode;
+      document.getElementById('mdf_bankName').value = masterData.bankName;
+      document.getElementById('mdf_iban').value = masterData.iban;
+      document.getElementById('mdf_bic').value = masterData.bic;
+      document.getElementById('mdf_kontoNummer').value = masterData.kontoNummer;
+      document.getElementById('mdf_kontoInhaber').value = masterData.kontoInhaber;
+      document.getElementById('mdf_bankleitzahl').value = masterData.bankleitzahl;
+      document.getElementById('mdf_referenz').value = masterData.referenz;
+    }
+    function saveMasterdata(event) {
+      event.preventDefault();
+      masterData.companyName = document.getElementById('mdf_companyName').value;
+      masterData.addressZusatz = document.getElementById('mdf_addressZusatz').value;
+      masterData.street = document.getElementById('mdf_street').value;
+      masterData.zip = document.getElementById('mdf_zip').value;
+      masterData.city = document.getElementById('mdf_city').value;
+      masterData.country = document.getElementById('mdf_country').value;
+      masterData.phone1 = document.getElementById('mdf_phone1').value;
+      masterData.phone2 = document.getElementById('mdf_phone2').value;
+      masterData.fax = document.getElementById('mdf_fax').value;
+      masterData.email = document.getElementById('mdf_email').value;
+      masterData.website = document.getElementById('mdf_website').value;
+      masterData.ustId = document.getElementById('mdf_ustId').value;
+      masterData.taxCode = document.getElementById('mdf_taxCode').value;
+      masterData.bankName = document.getElementById('mdf_bankName').value;
+      masterData.iban = document.getElementById('mdf_iban').value;
+      masterData.bic = document.getElementById('mdf_bic').value;
+      masterData.kontoNummer = document.getElementById('mdf_kontoNummer').value;
+      masterData.kontoInhaber = document.getElementById('mdf_kontoInhaber').value;
+      masterData.bankleitzahl = document.getElementById('mdf_bankleitzahl').value;
+      masterData.referenz = document.getElementById('mdf_referenz').value;
+      alert("Stammdaten gespeichert (Simulation)");
+      renderMasterdata();
+      showSection('masterdata');
+    }
+    function editMasterdata() {
+      renderMasterdataForm();
+      showSection('masterdata_form');
+    }
+    
+    /* -----------------------------------------
+       19) DROP DOWN (ehemals Verwaltung)
+    ----------------------------------------- */
+    function renderDropdown() {
+      let colorsHtml = "";
+      colors.forEach((color, index) => {
+        colorsHtml += `<li>${color}`;
+        if (isStoreOrStv() || isAdmin()) {
+          colorsHtml += ` <button class="button" type="button" onclick="editColor(${index}); return false;">Bearbeiten</button>
+                          <button class="button" type="button" onclick="deleteColor(${index}); return false;">Löschen</button>`;
+        }
+        colorsHtml += `</li>`;
+      });
+      let sizesHtml = "";
+      sizes.forEach((size, index) => {
+        sizesHtml += `<li>${size}`;
+        if (isStoreOrStv() || isAdmin()) {
+          sizesHtml += ` <button class="button" type="button" onclick="editSize(${index}); return false;">Bearbeiten</button>
+                         <button class="button" type="button" onclick="deleteSize(${index}); return false;">Löschen</button>`;
+        }
+        sizesHtml += `</li>`;
+      });
+      let colorAdd = "";
+      let sizeAdd = "";
+      if (isStoreOrStv() || isAdmin()) {
+        colorAdd = `<div style="margin-top:10px;">
+          <input type="text" id="newColorInput" placeholder="Neue Farbe">
+          <button class="button" type="button" onclick="addColor(); return false;">Hinzufügen</button>
+        </div>`;
+        sizeAdd = `<div style="margin-top:10px;">
+          <input type="text" id="newSizeInput" placeholder="Neue Größe">
+          <button class="button" type="button" onclick="addSize(); return false;">Hinzufügen</button>
+        </div>`;
+      }
+      let html = `<h2>Farben</h2>
+                  <ul>${colorsHtml}</ul>
+                  ${colorAdd}
+                  <h2>Größen</h2>
+                  <ul>${sizesHtml}</ul>
+                  ${sizeAdd}`;
+      document.getElementById('dropdown').innerHTML = `<h1>Drop Down</h1><div id="verwaltungContainer">${html}</div>`;
+    }
+    function addColor() {
+      let newColor = document.getElementById('newColorInput').value;
+      if(newColor && !colors.includes(newColor)) {
+        colors.push(newColor);
+        populateProductFormSelects();
+        renderDropdown();
+      }
+    }
+    function editColor(index) {
+      let newColor = prompt("Neuen Farbwert eingeben:", colors[index]);
+      if(newColor !== null && newColor.trim() !== "") {
+        colors[index] = newColor.trim();
+        populateProductFormSelects();
+        renderDropdown();
+      }
+    }
+    function deleteColor(index) {
+      if(!confirm("Farbe wirklich löschen?")) return;
+      colors.splice(index, 1);
+      populateProductFormSelects();
+      renderDropdown();
+    }
+    function addSize() {
+      let newSize = document.getElementById('newSizeInput').value;
+      if(newSize && !sizes.includes(newSize)) {
+        sizes.push(newSize);
+        populateProductFormSelects();
+        renderDropdown();
+      }
+    }
+    function editSize(index) {
+      let newSize = prompt("Neuen Größewert eingeben:", sizes[index]);
+      if(newSize !== null && newSize.trim() !== "") {
+        sizes[index] = newSize.trim();
+        populateProductFormSelects();
+        renderDropdown();
+      }
+    }
+    function deleteSize(index) {
+      if(!confirm("Größe wirklich löschen?")) return;
+      sizes.splice(index, 1);
+      populateProductFormSelects();
+      renderDropdown();
+    }
+    
+    /* -----------------------------------------
+       20) SUCH-/FILTERAKTION
+    ----------------------------------------- */
+    function doSearch(event) {
+      event.preventDefault();
+      let query = document.getElementById('searchQuery').value.toLowerCase();
+      let filterType = document.getElementById('searchType').value;
+      let from = document.getElementById('searchFrom').value;
+      let to = document.getElementById('searchTo').value;
+      let results = "";
+      if(filterType === "" || filterType === "Produkte") {
+        let prods = productsData.filter(p => {
+          return (p.title.toLowerCase().includes(query) || p.description.toLowerCase().includes(query));
+        });
+        results += "<h3>Produkte</h3>";
+        if(prods.length === 0) results += "<p>Keine Treffer.</p>";
+        else {
+          results += "<ul>";
+          prods.forEach(p => {
+            results += `<li>ID ${p.id}: ${p.title} <button class="button" onclick="detailProduct(${p.id}); return false;">Details</button></li>`;
+          });
+          results += "</ul>";
+        }
+      }
+      if(filterType === "" || filterType === "Lieferanten") {
+        let lief = suppliersData.filter(s => {
+          return (s.supplierCompanyName.toLowerCase().includes(query) || s.supplierNumber.toLowerCase().includes(query));
+        });
+        results += "<h3>Lieferanten</h3>";
+        if(lief.length === 0) results += "<p>Keine Treffer.</p>";
+        else {
+          results += "<ul>";
+          lief.forEach(s => {
+            results += `<li>ID ${s.id}: ${s.supplierCompanyName} <button class="button" onclick="detailSupplier(${s.id}); return false;">Details</button></li>`;
+          });
+          results += "</ul>";
+        }
+      }
+      if(filterType === "" || filterType === "Kategorien") {
+        let cats = categoriesData.filter(c => c.name.toLowerCase().includes(query));
+        results += "<h3>Kategorien</h3>";
+        if(cats.length === 0) results += "<p>Keine Treffer.</p>";
+        else {
+          results += "<ul>";
+          cats.forEach(c => {
+            results += `<li>ID ${c.id}: ${c.name} <button class="button" onclick="detailCategory(${c.id}); return false;">Details</button></li>`;
+          });
+          results += "</ul>";
+        }
+      }
+      if(filterType === "" || filterType === "Kunden") {
+        let cust = customersData.filter(c => (c.customerCompanyName.toLowerCase().includes(query) || c.customerNumber.toLowerCase().includes(query)));
+        results += "<h3>Kunden</h3>";
+        if(cust.length === 0) results += "<p>Keine Treffer.</p>";
+        else {
+          results += "<ul>";
+          cust.forEach(c => {
+            results += `<li>ID ${c.id}: ${c.customerCompanyName} <button class="button" onclick="detailCustomer(${c.id}); return false;">Details</button></li>`;
+          });
+          results += "</ul>";
+        }
+      }
+      if(filterType === "" || filterType === "Transaktionen") {
+        let trans = transactionsData.filter(t => {
+          let d = t.date || t.retoureDate || "";
+          let inRange = true;
+          if(from && d < from) inRange = false;
+          if(to && d > to) inRange = false;
+          return inRange && ((t.number && t.number.toLowerCase().includes(query)) || (t.transactionType && t.transactionType.toLowerCase().includes(query)));
+        });
+        results += "<h3>Transaktionen</h3>";
+        if(trans.length === 0) results += "<p>Keine Treffer.</p>";
+        else {
+          results += "<ul>";
+          trans.forEach(t => {
+            results += `<li>ID ${t.id}: ${t.transactionType} <button class="button" onclick="detailTransaction(${t.id}); return false;">Details</button></li>`;
+          });
+          results += "</ul>";
+        }
+      }
+      document.getElementById('searchResults').innerHTML = results;
+    }
+    
+    /* -----------------------------------------
+       21) BESTELLVORSCHLAG
+    ----------------------------------------- */
+    function bestellungVorschlag() {
+      const idField = document.getElementById('bestellungId').value;
+      let b = bestellungenData.find(x => x.id == idField);
+      if (!b) {
+        alert("Keine Bestellung gefunden. Bitte zuerst speichern.");
+        return;
+      }
+      if (!b.supplierId) {
+        alert("Bitte zuerst einen Lieferanten auswählen und speichern.");
+        return;
+      }
+      let candidateProducts = productsData.filter(p => p.supplierId === b.supplierId && p.stock < p.minStock && p.status !== "Inaktiv");
+      candidateProducts.forEach(p => {
+        let exists = b.products.find(bp => bp.productId === p.id);
+        if (!exists) { b.products.push({ productId: p.id, qty: p.minOrderQty || 1 }); }
+      });
+      renderBestellungProductsList(b);
+      updateBestellungProductSums(b);
+    }
+    
+    /* -----------------------------------------
+       22) BENUTZERVERWALTUNG
+    ----------------------------------------- */
+    function renderBenutzer() {
+      let html = '<table>';
+      html += '<tr><th>Benutzername</th><th>Name</th><th>Rolle</th><th>Aktionen</th></tr>';
+      usersData.forEach(u => {
+        html += `<tr>
+          <td>${u.username}</td>
+          <td>${u.name}</td>
+          <td>${u.role}</td>
+          <td>`;
+        if (isAdmin()) {
+          html += `<button class="button" onclick="editUser('${u.username}'); return false;">Bearbeiten</button>`;
+          if (currentUser && currentUser.username !== u.username) {
+            html += `<button class="button" onclick="deleteUser('${u.username}'); return false;">Löschen</button>`;
+          }
+        }
+        html += `</td></tr>`;
+      });
+      html += '</table>';
+      let addBtn = "";
+      if (isAdmin()) {
+        addBtn = `<button class="button" onclick="newUser(); return false;">Neuen Benutzer anlegen</button>`;
+      }
+      document.getElementById('benutzerverwaltung').innerHTML = `<h1>Benutzerverwaltung</h1>${addBtn}<div id="benutzerListe">${html}</div>`;
+    }
+    function saveUser(event) {
+      event.preventDefault();
+      const username = document.getElementById('userUsername').value;
+      const name = document.getElementById('userName').value;
+      const password = document.getElementById('userPassword').value;
+      const role = document.getElementById('userRole').value;
+      let existing = usersData.find(u => u.username === username);
+      if(existing) {
+        existing.name = name;
+        if(password.trim() !== "") { existing.password = password; }
+        existing.role = role;
+      } else {
+        usersData.push({ username, name, password, role });
+      }
+      alert("Benutzer gespeichert (Simulation)");
+      document.querySelector('#user_form form').reset();
+      renderBenutzer();
+      showSection('benutzerverwaltung');
+    }
+    function editUser(username) {
+      let u = usersData.find(user => user.username === username);
+      if(u) {
+        document.getElementById('userUsername').value = u.username;
+        document.getElementById('userUsername').disabled = true;
+        document.getElementById('userName').value = u.name;
+        document.getElementById('userPassword').value = "";
+        document.getElementById('userRole').value = u.role;
+        showSection('user_form');
+      }
+    }
+    function deleteUser(username) {
+      if(!isAdmin()) {
+        alert("Keine Berechtigung zum Löschen!");
+        return;
+      }
+      if(!confirm("Benutzer wirklich löschen?")) return;
+      usersData = usersData.filter(u => u.username !== username);
+      renderBenutzer();
+    }
+    function newUser() {
+      document.querySelector('#user_form form').reset();
+      document.getElementById('userUsername').disabled = false;
+      showSection('user_form');
+    }
+    
+    /* -----------------------------------------
+       23) STAMMDATEN (Impressum)
+    ----------------------------------------- */
+    function renderMasterdata() {
+      let html = `<p><strong>Firma:</strong> ${masterData.companyName}</p>
+                  <p><strong>Adresse:</strong> ${masterData.street}, ${masterData.zip} ${masterData.city}, ${masterData.country}</p>
+                  <p><strong>Telefon:</strong> ${masterData.phone1}</p>
+                  <p><strong>Email:</strong> ${masterData.email}</p>
+                  <p><strong>Website:</strong> ${masterData.website}</p>`;
+      let editBtn = "";
+      if (canEditOrNewMasterdata()) {
+        editBtn = `<button class="button" onclick="editMasterdata(); return false;">Bearbeiten</button>`;
+      }
+      document.getElementById('masterdata').innerHTML = `
+        <h1>Stammdaten (Impressum)</h1>
+        <div id="masterdataContainer">${html}</div>
+        ${editBtn}
+      `;
+    }
+    function renderMasterdataForm() {
+      document.getElementById('mdf_companyName').value = masterData.companyName;
+      document.getElementById('mdf_addressZusatz').value = masterData.addressZusatz;
+      document.getElementById('mdf_street').value = masterData.street;
+      document.getElementById('mdf_zip').value = masterData.zip;
+      document.getElementById('mdf_city').value = masterData.city;
+      document.getElementById('mdf_country').value = masterData.country;
+      document.getElementById('mdf_phone1').value = masterData.phone1;
+      document.getElementById('mdf_phone2').value = masterData.phone2;
+      document.getElementById('mdf_fax').value = masterData.fax;
+      document.getElementById('mdf_email').value = masterData.email;
+      document.getElementById('mdf_website').value = masterData.website;
+      document.getElementById('mdf_ustId').value = masterData.ustId;
+      document.getElementById('mdf_taxCode').value = masterData.taxCode;
+      document.getElementById('mdf_bankName').value = masterData.bankName;
+      document.getElementById('mdf_iban').value = masterData.iban;
+      document.getElementById('mdf_bic').value = masterData.bic;
+      document.getElementById('mdf_kontoNummer').value = masterData.kontoNummer;
+      document.getElementById('mdf_kontoInhaber').value = masterData.kontoInhaber;
+      document.getElementById('mdf_bankleitzahl').value = masterData.bankleitzahl;
+      document.getElementById('mdf_referenz').value = masterData.referenz;
+    }
+    function saveMasterdata(event) {
+      event.preventDefault();
+      masterData.companyName = document.getElementById('mdf_companyName').value;
+      masterData.addressZusatz = document.getElementById('mdf_addressZusatz').value;
+      masterData.street = document.getElementById('mdf_street').value;
+      masterData.zip = document.getElementById('mdf_zip').value;
+      masterData.city = document.getElementById('mdf_city').value;
+      masterData.country = document.getElementById('mdf_country').value;
+      masterData.phone1 = document.getElementById('mdf_phone1').value;
+      masterData.phone2 = document.getElementById('mdf_phone2').value;
+      masterData.fax = document.getElementById('mdf_fax').value;
+      masterData.email = document.getElementById('mdf_email').value;
+      masterData.website = document.getElementById('mdf_website').value;
+      masterData.ustId = document.getElementById('mdf_ustId').value;
+      masterData.taxCode = document.getElementById('mdf_taxCode').value;
+      masterData.bankName = document.getElementById('mdf_bankName').value;
+      masterData.iban = document.getElementById('mdf_iban').value;
+      masterData.bic = document.getElementById('mdf_bic').value;
+      masterData.kontoNummer = document.getElementById('mdf_kontoNummer').value;
+      masterData.kontoInhaber = document.getElementById('mdf_kontoInhaber').value;
+      masterData.bankleitzahl = document.getElementById('mdf_bankleitzahl').value;
+      masterData.referenz = document.getElementById('mdf_referenz').value;
+      alert("Stammdaten gespeichert (Simulation)");
+      renderMasterdata();
+      showSection('masterdata');
+    }
+    function editMasterdata() {
+      renderMasterdataForm();
+      showSection('masterdata_form');
+    }
+    
+    /* -----------------------------------------
+       20) DROP DOWN (ehemals Verwaltung)
+    ----------------------------------------- */
+    function renderDropdown() {
+      let colorsHtml = "";
+      colors.forEach((color, index) => {
+        colorsHtml += `<li>${color}`;
+        if (isStoreOrStv() || isAdmin()) {
+          colorsHtml += ` <button class="button" type="button" onclick="editColor(${index}); return false;">Bearbeiten</button>
+                          <button class="button" type="button" onclick="deleteColor(${index}); return false;">Löschen</button>`;
+        }
+        colorsHtml += `</li>`;
+      });
+      let sizesHtml = "";
+      sizes.forEach((size, index) => {
+        sizesHtml += `<li>${size}`;
+        if (isStoreOrStv() || isAdmin()) {
+          sizesHtml += ` <button class="button" type="button" onclick="editSize(${index}); return false;">Bearbeiten</button>
+                         <button class="button" type="button" onclick="deleteSize(${index}); return false;">Löschen</button>`;
+        }
+        sizesHtml += `</li>`;
+      });
+      let colorAdd = "";
+      let sizeAdd = "";
+      if (isStoreOrStv() || isAdmin()) {
+        colorAdd = `<div style="margin-top:10px;">
+          <input type="text" id="newColorInput" placeholder="Neue Farbe">
+          <button class="button" type="button" onclick="addColor(); return false;">Hinzufügen</button>
+        </div>`;
+        sizeAdd = `<div style="margin-top:10px;">
+          <input type="text" id="newSizeInput" placeholder="Neue Größe">
+          <button class="button" type="button" onclick="addSize(); return false;">Hinzufügen</button>
+        </div>`;
+      }
+      let html = `<h2>Farben</h2>
+                  <ul>${colorsHtml}</ul>
+                  ${colorAdd}
+                  <h2>Größen</h2>
+                  <ul>${sizesHtml}</ul>
+                  ${sizeAdd}`;
+      document.getElementById('dropdown').innerHTML = `<h1>Drop Down</h1><div id="verwaltungContainer">${html}</div>`;
+    }
+    function addColor() {
+      let newColor = document.getElementById('newColorInput').value;
+      if(newColor && !colors.includes(newColor)) {
+        colors.push(newColor);
+        populateProductFormSelects();
+        renderDropdown();
+      }
+    }
+    function editColor(index) {
+      let newColor = prompt("Neuen Farbwert eingeben:", colors[index]);
+      if(newColor !== null && newColor.trim() !== "") {
+        colors[index] = newColor.trim();
+        populateProductFormSelects();
+        renderDropdown();
+      }
+    }
+    function deleteColor(index) {
+      if(!confirm("Farbe wirklich löschen?")) return;
+      colors.splice(index, 1);
+      populateProductFormSelects();
+      renderDropdown();
+    }
+    function addSize() {
+      let newSize = document.getElementById('newSizeInput').value;
+      if(newSize && !sizes.includes(newSize)) {
+        sizes.push(newSize);
+        populateProductFormSelects();
+        renderDropdown();
+      }
+    }
+    function editSize(index) {
+      let newSize = prompt("Neuen Größewert eingeben:", sizes[index]);
+      if(newSize !== null && newSize.trim() !== "") {
+        sizes[index] = newSize.trim();
+        populateProductFormSelects();
+        renderDropdown();
+      }
+    }
+    function deleteSize(index) {
+      if(!confirm("Größe wirklich löschen?")) return;
+      sizes.splice(index, 1);
+      populateProductFormSelects();
+      renderDropdown();
+    }
+    
+    /* -----------------------------------------
+       21) SUCH-/FILTERAKTION
+    ----------------------------------------- */
+    function doSearch(event) {
+      event.preventDefault();
+      let query = document.getElementById('searchQuery').value.toLowerCase();
+      let filterType = document.getElementById('searchType').value;
+      let from = document.getElementById('searchFrom').value;
+      let to = document.getElementById('searchTo').value;
+      let results = "";
+      if(filterType === "" || filterType === "Produkte") {
+        let prods = productsData.filter(p => {
+          return (p.title.toLowerCase().includes(query) || p.description.toLowerCase().includes(query));
+        });
+        results += "<h3>Produkte</h3>";
+        if(prods.length === 0) results += "<p>Keine Treffer.</p>";
+        else {
+          results += "<ul>";
+          prods.forEach(p => {
+            results += `<li>ID ${p.id}: ${p.title} <button class="button" onclick="detailProduct(${p.id}); return false;">Details</button></li>`;
+          });
+          results += "</ul>";
+        }
+      }
+      if(filterType === "" || filterType === "Lieferanten") {
+        let lief = suppliersData.filter(s => {
+          return (s.supplierCompanyName.toLowerCase().includes(query) || s.supplierNumber.toLowerCase().includes(query));
+        });
+        results += "<h3>Lieferanten</h3>";
+        if(lief.length === 0) results += "<p>Keine Treffer.</p>";
+        else {
+          results += "<ul>";
+          lief.forEach(s => {
+            results += `<li>ID ${s.id}: ${s.supplierCompanyName} <button class="button" onclick="detailSupplier(${s.id}); return false;">Details</button></li>`;
+          });
+          results += "</ul>";
+        }
+      }
+      if(filterType === "" || filterType === "Kategorien") {
+        let cats = categoriesData.filter(c => c.name.toLowerCase().includes(query));
+        results += "<h3>Kategorien</h3>";
+        if(cats.length === 0) results += "<p>Keine Treffer.</p>";
+        else {
+          results += "<ul>";
+          cats.forEach(c => {
+            results += `<li>ID ${c.id}: ${c.name} <button class="button" onclick="detailCategory(${c.id}); return false;">Details</button></li>`;
+          });
+          results += "</ul>";
+        }
+      }
+      if(filterType === "" || filterType === "Kunden") {
+        let cust = customersData.filter(c => (c.customerCompanyName.toLowerCase().includes(query) || c.customerNumber.toLowerCase().includes(query)));
+        results += "<h3>Kunden</h3>";
+        if(cust.length === 0) results += "<p>Keine Treffer.</p>";
+        else {
+          results += "<ul>";
+          cust.forEach(c => {
+            results += `<li>ID ${c.id}: ${c.customerCompanyName} <button class="button" onclick="detailCustomer(${c.id}); return false;">Details</button></li>`;
+          });
+          results += "</ul>";
+        }
+      }
+      if(filterType === "" || filterType === "Transaktionen") {
+        let trans = transactionsData.filter(t => {
+          let d = t.date || t.retoureDate || "";
+          let inRange = true;
+          if(from && d < from) inRange = false;
+          if(to && d > to) inRange = false;
+          return inRange && ((t.number && t.number.toLowerCase().includes(query)) || (t.transactionType && t.transactionType.toLowerCase().includes(query)));
+        });
+        results += "<h3>Transaktionen</h3>";
+        if(trans.length === 0) results += "<p>Keine Treffer.</p>";
+        else {
+          results += "<ul>";
+          trans.forEach(t => {
+            results += `<li>ID ${t.id}: ${t.transactionType} <button class="button" onclick="detailTransaction(${t.id}); return false;">Details</button></li>`;
+          });
+          results += "</ul>";
+        }
+      }
+      document.getElementById('searchResults').innerHTML = results;
+    }
+    
+    /* -----------------------------------------
+       Fenster laden
+    ----------------------------------------- */
+    window.onload = function() {
+      document.getElementById('navbar').style.display = "none";
+      showSection('login');
+      renderLogin();
+    }
+    document.addEventListener('mousemove', resetInactivityTimer);
+    document.addEventListener('keydown', resetInactivityTimer);
+    document.addEventListener('click', resetInactivityTimer);
+  </script>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav id="navbar" style="display:none;">
+    <a href="javascript:void(0);" onclick="showSection('home'); return false;">Home</a> |
+    <a href="javascript:void(0);" onclick="showSection('products'); return false;">Produkte</a> |
+    <a href="javascript:void(0);" onclick="showSection('customers'); return false;">Kunden</a> |
+    <a href="javascript:void(0);" onclick="showSection('categories'); return false;">Kategorien</a> |
+    <a href="javascript:void(0);" onclick="showSection('suppliers'); return false;">Lieferanten</a> |
+    <a href="javascript:void(0);" onclick="showSection('auftraege'); return false;">Aufträge</a> |
+    <a href="javascript:void(0);" onclick="showSection('bestellungen'); return false;">Bestellungen</a> |
+    <a href="javascript:void(0);" onclick="showSection('transaktionen'); return false;">Transaktionen</a> |
+    <a href="javascript:void(0);" onclick="showSection('such_filter'); return false;">Such-/Filteraktion</a> |
+    <a href="javascript:void(0);" onclick="showSection('masterdata'); return false;">Stammdaten</a> |
+    <a href="javascript:void(0);" onclick="showSection('dropdown'); return false;">Drop Down</a> |
+    <a href="javascript:void(0);" onclick="showSection('retoure_form'); return false;">Retouren</a> |
+    <a href="javascript:void(0);" onclick="showSection('tagesabschluss'); return false;">Tagesabschluss</a> |
+    <a href="javascript:void(0);" onclick="showSection('bericht_statistik'); return false;">Bericht / Statistik</a> |
+    <a href="javascript:void(0);" onclick="showSection('benutzerverwaltung'); return false;">Benutzerverwaltung</a>
+    <a href="javascript:void(0);" onclick="logout(); return false;" style="float:right;">Logout</a>
+  </nav>
+  <hr>
+  
+  <!-- LOGIN -->
+  <div id="login" class="page-section">
+    <h1>Anmeldung</h1>
+    <form onsubmit="doLogin(event); return false;">
+      <div class="form-group">
+        <label>Benutzername:</label>
+        <input type="text" id="loginUsername" required>
+      </div>
+      <div class="form-group">
+        <label>Passwort:</label>
+        <input type="password" id="loginPassword" required>
+      </div>
+      <input type="submit" value="Anmelden" class="button">
+    </form>
+    <p id="loginError" style="color:red;"></p>
+  </div>
+  
+  <!-- HOME -->
+  <div id="home" class="page-section">
+    <h1>Willkommen im Warenwirtschaftssystem</h1>
+    <p>Hallo <strong id="currentUserDisplay"></strong>, bitte wählen Sie eine Option aus dem Menü.</p>
+  </div>
+  
+  <!-- PRODUKTE -->
+  <div id="products" class="page-section"></div>
+  <div id="product_form" class="page-section">
+    <h1>Produkt anlegen/bearbeiten</h1>
+    <form onsubmit="saveProduct(event); return false;">
+      <input type="hidden" id="productId">
+      <div class="form-group">
+        <label>Titel:</label>
+        <input type="text" id="productTitle" required>
+      </div>
+      <div class="form-group">
+        <label>Beschreibung:</label>
+        <textarea id="productDescription" required></textarea>
+      </div>
+      <div class="form-group">
+        <label>EAN Code:</label>
+        <input type="text" id="productEAN">
+      </div>
+      <div class="form-group">
+        <label>Artikelnummer (SKU):</label>
+        <input type="text" id="productSKU">
+      </div>
+      <div class="form-group">
+        <label>Einheit:</label>
+        <input type="text" id="productUnit" value="STK">
+      </div>
+      <div class="form-group">
+        <label>Farbe:</label>
+        <select id="productColor"></select>
+      </div>
+      <div class="form-group">
+        <label>Größe:</label>
+        <select id="productSize"></select>
+      </div>
+      <div class="form-group">
+        <label>Kategorie:</label>
+        <select id="productCategory"></select>
+      </div>
+      <div class="form-group">
+        <label>Lagerplatz:</label>
+        <input type="text" id="productStorageLocation" value="Standardlagerplatz">
+      </div>
+      <div class="form-group">
+        <label>Ablaufdatum (kürzestes):</label>
+        <input type="date" id="productExpiryDate">
+      </div>
+      <div class="form-group">
+        <label>Lieferant:</label>
+        <select id="productSupplier"></select>
+      </div>
+      <div class="form-group">
+        <label>Zusatztext:</label>
+        <textarea id="productExtraText"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Einkaufspreis:</label>
+        <input type="number" step="0.01" id="productPurchasePrice" value="0.00">
+      </div>
+      <div class="form-group">
+        <label>Verkaufspreis (brutto):</label>
+        <input type="number" step="0.01" id="productSalePrice" value="0.00">
+      </div>
+      <div class="form-group">
+        <label>MwSt:</label>
+        <select id="productTaxRate">
+          <option value="0">0%</option>
+          <option value="7">7%</option>
+          <option value="19" selected>19%</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Mindestbestand:</label>
+        <input type="number" id="productMinStock" value="0">
+      </div>
+      <div class="form-group">
+        <label>Mindestbestellmenge:</label>
+        <input type="number" id="productMinOrderQty" value="0">
+      </div>
+      <div class="form-group">
+        <label>Bestand:</label>
+        <input type="number" id="productStock" value="0">
+      </div>
+      <div class="form-group">
+        <label>Kassenansicht:</label>
+        <select id="productCashView">
+          <option value="Ja" selected>Ja</option>
+          <option value="Nein">Nein</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Aktionspreis:</label>
+        <input type="number" step="0.01" id="productPromotionPrice" value="0.00">
+      </div>
+      <div class="form-group">
+        <label>Aktionspreis startet:</label>
+        <input type="date" id="productPromotionStartDate">
+      </div>
+      <div class="form-group">
+        <label>Aktionspreis endet:</label>
+        <input type="date" id="productPromotionEndDate">
+      </div>
+      <div class="form-group">
+        <label>Status:</label>
+        <select id="productStatus">
+          <option value="Aktiv" selected>Aktiv</option>
+          <option value="Inaktiv">Inaktiv</option>
+        </select>
+      </div>
+      <input type="submit" value="Speichern" class="button">
+    </form>
+    <button class="button" onclick="showSection('products'); return false;">Zurück</button>
+  </div>
+  <div id="product_details" class="page-section">
+    <h1>Produktdetails</h1>
+    <div id="productDetailsContainer"></div>
+    <button class="button" onclick="showSection('products'); return false;">Zurück</button>
+  </div>
+  
+  <!-- KUNDEN -->
+  <div id="customers" class="page-section"></div>
+  <div id="customer_form" class="page-section">
+    <h1>Kunde anlegen/bearbeiten</h1>
+    <form onsubmit="saveCustomer(event); return false;">
+      <input type="hidden" id="customerInternalId">
+      <div class="form-group">
+        <label>Nummer:</label>
+        <input type="text" id="customerNumber">
+      </div>
+      <div class="form-group">
+        <label>Firma / Name:</label>
+        <input type="text" id="customerCompanyName" required>
+      </div>
+      <div class="form-group">
+        <label>Adresszusatz:</label>
+        <input type="text" id="customerAddressZusatz">
+      </div>
+      <div class="form-group">
+        <label>Straße:</label>
+        <input type="text" id="customerStreet">
+      </div>
+      <div class="form-group">
+        <label>PLZ:</label>
+        <input type="text" id="customerZip">
+      </div>
+      <div class="form-group">
+        <label>Ort:</label>
+        <input type="text" id="customerCity">
+      </div>
+      <div class="form-group">
+        <label>Land:</label>
+        <input type="text" id="customerCountry">
+      </div>
+      <div class="form-group">
+        <label>Telefon 1:</label>
+        <input type="text" id="customerPhone1">
+      </div>
+      <div class="form-group">
+        <label>Telefon 2:</label>
+        <input type="text" id="customerPhone2">
+      </div>
+      <div class="form-group">
+        <label>Fax:</label>
+        <input type="text" id="customerFax">
+      </div>
+      <div class="form-group">
+        <label>Email:</label>
+        <input type="email" id="customerEmail">
+      </div>
+      <div class="form-group">
+        <label>Webseite:</label>
+        <input type="text" id="customerWebsite">
+      </div>
+      <div class="form-group">
+        <label>USt-IdNr.:</label>
+        <input type="text" id="customerUstId">
+      </div>
+      <div class="form-group">
+        <label>Steuercode:</label>
+        <input type="text" id="customerTaxCode">
+      </div>
+      <div class="form-group">
+        <label>Rabatt (in %):</label>
+        <input type="number" step="0.01" id="customerDiscount" value="0">
+      </div>
+      <div class="form-group">
+        <label>Zusatztext:</label>
+        <textarea id="customerExtraText"></textarea>
+      </div>
+      <input type="submit" value="Speichern" class="button">
+    </form>
+    <button class="button" onclick="showSection('customers'); return false;">Zurück</button>
+  </div>
+  <div id="customer_details" class="page-section">
+    <h1>Kundendetails</h1>
+    <div id="customerDetailsContainer"></div>
+    <button class="button" onclick="showSection('customers'); return false;">Zurück</button>
+  </div>
+  
+  <!-- KATEGORIEN -->
+  <div id="categories" class="page-section"></div>
+  <div id="category_form" class="page-section">
+    <h1>Kategorie anlegen/bearbeiten</h1>
+    <form onsubmit="saveCategory(event); return false;">
+      <input type="hidden" id="categoryId">
+      <div class="form-group">
+        <label>Name:</label>
+        <input type="text" id="categoryName" required>
+      </div>
+      <div class="form-group">
+        <label>Beschreibung:</label>
+        <textarea id="categoryDescription"></textarea>
+      </div>
+      <input type="submit" value="Speichern" class="button">
+    </form>
+    <button class="button" onclick="document.getElementById('categoryId').value=''; showSection('categories'); return false;">Zurück</button>
+  </div>
+  <div id="category_details" class="page-section">
+    <h1>Kategoriedetails</h1>
+    <div id="categoryDetailsContainer"></div>
+    <button class="button" onclick="showSection('categories'); return false;">Zurück</button>
+  </div>
+  
+  <!-- LIEFERANTEN -->
+  <div id="suppliers" class="page-section"></div>
+  <div id="supplier_form" class="page-section">
+    <h1>Lieferant anlegen/bearbeiten</h1>
+    <form onsubmit="saveSupplier(event); return false;">
+      <input type="hidden" id="supplierId">
+      <div class="form-group">
+        <label>Nummer:</label>
+        <input type="text" id="supplierNumber">
+      </div>
+      <div class="form-group">
+        <label>Firma / Name:</label>
+        <input type="text" id="supplierCompanyName" required>
+      </div>
+      <div class="form-group">
+        <label>Adresszusatz:</label>
+        <input type="text" id="supplierAddressZusatz">
+      </div>
+      <div class="form-group">
+        <label>Straße:</label>
+        <input type="text" id="supplierStreet">
+      </div>
+      <div class="form-group">
+        <label>PLZ:</label>
+        <input type="text" id="supplierZip">
+      </div>
+      <div class="form-group">
+        <label>Ort:</label>
+        <input type="text" id="supplierCity">
+      </div>
+      <div class="form-group">
+        <label>Land:</label>
+        <input type="text" id="supplierCountry">
+      </div>
+      <div class="form-group">
+        <label>Telefon 1:</label>
+        <input type="text" id="supplierPhone1">
+      </div>
+      <div class="form-group">
+        <label>Telefon 2:</label>
+        <input type="text" id="supplierPhone2">
+      </div>
+      <div class="form-group">
+        <label>Fax:</label>
+        <input type="text" id="supplierFax">
+      </div>
+      <div class="form-group">
+        <label>Email:</label>
+        <input type="email" id="supplierEmail">
+      </div>
+      <div class="form-group">
+        <label>Webseite:</label>
+        <input type="text" id="supplierWebsite">
+      </div>
+      <div class="form-group">
+        <label>USt-IdNr.:</label>
+        <input type="text" id="supplierUstId">
+      </div>
+      <div class="form-group">
+        <label>Steuercode:</label>
+        <input type="text" id="supplierTaxCode">
+      </div>
+      <div class="form-group">
+        <label>Zusatztext:</label>
+        <textarea id="supplierZusatztext"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Eigene Kunden Nr.:</label>
+        <input type="text" id="supplierOwnCustomerNumber">
+      </div>
+      <input type="submit" value="Speichern" class="button">
+    </form>
+    <button class="button" onclick="showSection('suppliers'); return false;">Zurück</button>
+  </div>
+  <div id="supplier_details" class="page-section">
+    <h1>Lieferantendetails</h1>
+    <div id="supplierDetailsContainer"></div>
+    <button class="button" onclick="showSection('suppliers'); return false;">Zurück</button>
+  </div>
+  
+  <!-- AUFTRAEGE -->
+  <div id="auftraege" class="page-section"></div>
+  <div id="auftrag_form" class="page-section">
+    <h1>Neuer Auftrag – Daten</h1>
+    <form onsubmit="saveAuftrag(event); return false;">
+      <input type="hidden" id="auftragId">
+      <div class="form-group">
+        <label>Nummer:</label>
+        <input type="text" id="auftragNumber">
+      </div>
+      <div class="form-group">
+        <label>Datum:</label>
+        <input type="date" id="auftragDate" required>
+      </div>
+      <div class="form-group">
+        <label>Kunde:</label>
+        <select id="auftragCustomerSelect" required></select>
+      </div>
+      <div class="form-group">
+        <label>Status:</label>
+        <select id="auftragStatus">
+          <option value="Angebot">Angebot</option>
+          <option value="Auftrag" selected>Auftrag</option>
+          <option value="erledigt">erledigt</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Abweichende Lieferadresse:</label>
+        <input type="checkbox" id="auftragDiffAddress">
+      </div>
+      <div class="form-group">
+        <label>Versand:</label>
+        <input type="text" id="auftragShipping">
+      </div>
+      <div class="form-group">
+        <label>Versandkosten:</label>
+        <input type="number" step="0.01" id="auftragShippingCost" value="0">
+      </div>
+      <div class="form-group">
+        <label>Notiz:</label>
+        <textarea id="auftragNote"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Rabatt (in EUR):</label>
+        <input type="number" step="0.01" id="auftragDiscount" value="0.00">
+      </div>
+      <input type="submit" value="Speichern" class="button">
+    </form>
+    <button class="button" onclick="showSection('auftrag_products'); return false;">Produkte</button>
+    <button class="button" onclick="showSection('auftraege'); return false;">Zurück</button>
+  </div>
+  <div id="auftrag_products" class="page-section">
+    <h1>Neuer Auftrag – Produkte</h1>
+    <div id="auftragProductsList"></div>
+    <div style="margin-top:20px; border:1px solid #ccc; padding:10px;">
+      <h3>Produkt hinzufügen</h3>
+      <select id="auftragProductSelect"></select>
+      <label>Menge:</label>
+      <input type="number" id="auftragProductQty" value="1" min="1" style="width:60px;">
+      <button class="button" type="button" onclick="addAuftragProduct(); return false;">Hinzufügen</button>
+    </div>
+    <div style="margin-top:20px;">
+      <p>Zwischensumme (netto): <span id="auftragSubtotal">0.00 EUR</span></p>
+      <p>MwSt: <span id="auftragTax">0.00 EUR</span></p>
+      <p>Gesamtsumme (brutto): <span id="auftragTotal">0.00 EUR</span></p>
+    </div>
+    <button class="button" onclick="showSection('auftrag_form'); return false;">Zurück</button>
+  </div>
+  <div id="auftrag_details" class="page-section">
+    <h1>Auftragsdetails</h1>
+    <div id="auftragDetailsContainer"></div>
+    <button class="button" onclick="showSection('auftraege'); return false;">Zurück</button>
+  </div>
+  
+  <!-- BESTELLUNGEN -->
+  <div id="bestellungen" class="page-section"></div>
+  <div id="bestellung_form" class="page-section">
+    <h1>Neue Bestellung – Daten</h1>
+    <form onsubmit="saveBestellung(event); return false;">
+      <input type="hidden" id="bestellungId">
+      <div class="form-group">
+        <label>Bestellnummer:</label>
+        <input type="text" id="bestellungNumber">
+      </div>
+      <div class="form-group">
+        <label>Datum:</label>
+        <input type="date" id="bestellungDate" required>
+      </div>
+      <div class="form-group">
+        <label>Lieferant:</label>
+        <select id="bestellungSupplierSelect" required></select>
+      </div>
+      <div class="form-group">
+        <label>Status:</label>
+        <select id="bestellungStatus">
+          <option value="Angelegt" selected>Angelegt</option>
+          <option value="Bestellt">Bestellt</option>
+          <option value="geliefert">geliefert</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Notiz:</label>
+        <textarea id="bestellungNote"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Rabatt (in EUR):</label>
+        <input type="number" step="0.01" id="bestellungDiscount" value="0.00">
+      </div>
+      <input type="submit" value="Speichern" class="button">
+    </form>
+    <button class="button" onclick="showSection('bestellung_products'); return false;">Produkte</button>
+    <button class="button" onclick="showSection('bestellungen'); return false;">Zurück</button>
+  </div>
+  <div id="bestellung_products" class="page-section">
+    <h1>Neue Bestellung – Produkte</h1>
+    <div id="bestellungProductsList"></div>
+    <div style="margin-top:20px; border:1px solid #ccc; padding:10px;">
+      <h3>Produkt hinzufügen</h3>
+      <select id="bestellungProductSelect"></select>
+      <label>Menge (min. Bestellmenge):</label>
+      <input type="number" id="bestellungProductQty" value="1" min="1" style="width:60px;">
+      <button class="button" type="button" onclick="addBestellungProduct(); return false;">Hinzufügen</button>
+      <button class="button" type="button" onclick="bestellungVorschlag(); return false;">Bestellvorschlag</button>
+    </div>
+    <div style="margin-top:20px;">
+      <p>Zwischensumme: <span id="bestellungSubtotal">0.00 EUR</span></p>
+      <p>TAX: <span id="bestellungTax">0.00 EUR</span></p>
+      <p>Total: <span id="bestellungTotal">0.00 EUR</span></p>
+    </div>
+    <button class="button" onclick="showSection('bestellung_form'); return false;">Zurück</button>
+  </div>
+  <div id="bestellung_details" class="page-section">
+    <h1>Bestelldetails</h1>
+    <div id="bestellungDetailsContainer"></div>
+    <button class="button" onclick="showSection('bestellungen'); return false;">Zurück</button>
+  </div>
+  
+  <!-- TRANSAKTIONEN -->
+  <div id="transaktionen" class="page-section"></div>
+  <div id="transaction_details" class="page-section">
+    <h1>Transaktionsdetails</h1>
+    <div id="transactionDetailsContainer"></div>
+    <button class="button" onclick="showSection('transaktionen'); return false;">Zurück</button>
+  </div>
+  
+  <!-- RETOUREN -->
+  <div id="retoure_form" class="page-section">
+    <h1>Retoure anlegen – Daten</h1>
+    <form onsubmit="saveRetoureHeader(event); return false;">
+      <div class="form-group">
+        <label>Retourennummer:</label>
+        <input type="text" id="retoureNumber" required>
+      </div>
+      <div class="form-group">
+        <label>Retoure (Datum):</label>
+        <input type="date" id="retoureDate" required>
+      </div>
+      <div class="form-group">
+        <label>Kaufdatum:</label>
+        <input type="date" id="retourePurchaseDate" required>
+      </div>
+      <div class="form-group">
+        <label>Retourengrund:</label>
+        <select id="retoureReason">
+          <option value="Fehlkauf">Fehlkauf</option>
+          <option value="Garantie">Garantie</option>
+          <option value="Bruch">Bruch</option>
+          <option value="Eigengebrauch">Eigengebrauch</option>
+          <option value="Diebstahl">Diebstahl</option>
+          <option value="Rückruf">Rückruf</option>
+          <option value="Rückgabe (Her.)">Rückgabe (Her.)</option>
+          <option value="Sonstiges">Sonstiges</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Rabatt (in EUR):</label>
+        <input type="number" step="0.01" id="retoureDiscount" value="0.00">
+      </div>
+      <input type="submit" value="Weiter zu Produkten" class="button">
+    </form>
+    <button class="button" onclick="showSection('home'); return false;">Zurück</button>
+  </div>
+  <div id="retoure_products" class="page-section">
+    <h1>Retoure – Produkte hinzufügen</h1>
+    <div id="retoureProductsList"></div>
+    <div style="margin-top:20px; border:1px solid #ccc; padding:10px;">
+      <h3>Produkt hinzufügen</h3>
+      <select id="retoureProductSelect"></select>
+      <label>Menge:</label>
+      <input type="number" id="retoureProductQty" value="1" min="1" style="width:60px;">
+      <button class="button" type="button" onclick="addRetoureProduct(); return false;">Hinzufügen</button>
+    </div>
+    <div style="margin-top:20px;">
+      <p>Zwischensumme: <span id="retoureSubtotal">0.00 EUR</span></p>
+      <p>MwSt: <span id="retoureTax">0.00 EUR</span></p>
+      <p>Gesamtsumme: <span id="retoureTotal">0.00 EUR</span></p>
+    </div>
+    <button class="button" onclick="bookRetoure(); return false;">Retoure buchen</button>
+    <button class="button" onclick="showSection('retoure_form'); return false;">Zurück</button>
+  </div>
+  
+  <!-- TAGESABSCHLUSS -->
+  <div id="tagesabschluss" class="page-section">
+    <h1>Tagesabschluss</h1>
+    <button class="button" onclick="showTagesabschlussConfirm(); return false;">Tagesabschluss erstellen</button>
+    <div id="tagesabschlussContainer"></div>
+  </div>
+  <div id="tagesabschluss_confirm" class="page-section">
+    <h1>Tagesabschluss bestätigen</h1>
+    <p>Sind Sie sicher, dass Sie den Tagesabschluss erstellen möchten? Nach dem Abschluss können keine weiteren Transaktionen gebucht werden bis 0:01 Uhr des nächsten Tages.</p>
+    <button class="button" onclick="createTagesabschluss(); return false;">Ja, Tagesabschluss erstellen</button>
+    <button class="button" onclick="showSection('tagesabschluss'); return false;">Abbrechen</button>
+  </div>
+  
+  <!-- BERICHT / STATISTIK -->
+  <div id="bericht_statistik" class="page-section">
+    <h1>Bericht / Statistik</h1>
+    <form onsubmit="generateReport(event); return false;">
+      <div class="form-group">
+        <label>Von:</label>
+        <input type="date" id="reportFrom" required>
+      </div>
+      <div class="form-group">
+        <label>Bis:</label>
+        <input type="date" id="reportTo" required>
+      </div>
+      <div class="form-group">
+        <label>Berichtstyp:</label>
+        <select id="reportType">
+          <option value="Retouren">Retouren</option>
+          <option value="Bestellungen">Bestellungen</option>
+          <option value="Auftraege">Aufträge</option>
+          <option value="Umsatz">Umsatz</option>
+          <option value="Produkte">Produkte</option>
+          <option value="Kategorien">Kategorien</option>
+          <option value="Lieferanten">Lieferanten</option>
+          <option value="Kunden">Kunden</option>
+          <option value="UmsatzKategorie">Umsatz nach Kategorie</option>
+          <option value="UmsatzProdukt">Umsatz nach Produkt</option>
+        </select>
+      </div>
+      <button class="button" type="button" onclick="generateReport(event); return false;">Suchen</button>
+      <button class="button" type="button" onclick="document.getElementById('reportResults').innerHTML = '';">Zurücksetzen</button>
+    </form>
+    <div id="reportResults"></div>
+  </div>
+  
+  <!-- SUCH-/FILTERAKTION -->
+  <div id="such_filter" class="page-section">
+    <h1>Such-/Filteraktion</h1>
+    <form onsubmit="doSearch(event); return false;">
+      <div class="form-group">
+        <label>Suchbegriff:</label>
+        <input type="text" id="searchQuery" placeholder="Wörter oder Zahlen">
+      </div>
+      <div class="form-group">
+        <label>Spezialfilter (optional):</label>
+        <select id="searchType">
+          <option value="">-- alle --</option>
+          <option value="Produkte">Produkte</option>
+          <option value="Lieferanten">Lieferanten</option>
+          <option value="Kategorien">Kategorien</option>
+          <option value="Kunden">Kunden</option>
+          <option value="Transaktionen">Transaktionen</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Von (Datum):</label>
+        <input type="date" id="searchFrom">
+      </div>
+      <div class="form-group">
+        <label>Bis (Datum):</label>
+        <input type="date" id="searchTo">
+      </div>
+      <button class="button" type="button" onclick="doSearch(event); return false;">Suchen</button>
+      <button class="button" type="button" onclick="document.getElementById('searchResults').innerHTML = '';">Zurücksetzen</button>
+    </form>
+    <div id="searchResults"></div>
+  </div>
+  
+  <!-- BENUTZERVERWALTUNG -->
+  <div id="benutzerverwaltung" class="page-section"></div>
+  <div id="user_form" class="page-section">
+    <h1>Benutzer anlegen/bearbeiten</h1>
+    <form onsubmit="saveUser(event); return false;">
+      <div class="form-group">
+        <label>Benutzername:</label>
+        <input type="text" id="userUsername" required>
+      </div>
+      <div class="form-group">
+        <label>Name:</label>
+        <input type="text" id="userName" required>
+      </div>
+      <div class="form-group">
+        <label>Passwort:</label>
+        <input type="password" id="userPassword" required>
+      </div>
+      <div class="form-group">
+        <label>Rolle:</label>
+        <select id="userRole" required>
+          <option value="Leser">Leser</option>
+          <option value="Verkäufer">Verkäufer</option>
+          <option value="Stlv. Storeleitung">Stlv. Storeleitung</option>
+          <option value="Storeleitung (Admin)">Storeleitung (Admin)</option>
+        </select>
+      </div>
+      <input type="submit" value="Speichern" class="button">
+    </form>
+    <button class="button" onclick="showSection('benutzerverwaltung'); return false;">Zurück</button>
+  </div>
+  
+  <!-- STAMMDATEN -->
+  <div id="masterdata" class="page-section"></div>
+  <div id="masterdata_form" class="page-section">
+    <h1>Stammdaten bearbeiten</h1>
+    <form onsubmit="saveMasterdata(event); return false;">
+      <div class="form-group">
+        <label>Firma / Name</label>
+        <input type="text" id="mdf_companyName">
+      </div>
+      <div class="form-group">
+        <label>Adresszusatz</label>
+        <input type="text" id="mdf_addressZusatz">
+      </div>
+      <div class="form-group">
+        <label>Straße</label>
+        <input type="text" id="mdf_street">
+      </div>
+      <div class="form-group">
+        <label>PLZ</label>
+        <input type="text" id="mdf_zip">
+      </div>
+      <div class="form-group">
+        <label>Ort</label>
+        <input type="text" id="mdf_city">
+      </div>
+      <div class="form-group">
+        <label>Land</label>
+        <input type="text" id="mdf_country">
+      </div>
+      <div class="form-group">
+        <label>Telefon 1</label>
+        <input type="text" id="mdf_phone1">
+      </div>
+      <div class="form-group">
+        <label>Telefon 2</label>
+        <input type="text" id="mdf_phone2">
+      </div>
+      <div class="form-group">
+        <label>Fax</label>
+        <input type="text" id="mdf_fax">
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="mdf_email">
+      </div>
+      <div class="form-group">
+        <label>Webseite</label>
+        <input type="text" id="mdf_website">
+      </div>
+      <div class="form-group">
+        <label>USt-IdNr.:</label>
+        <input type="text" id="mdf_ustId">
+      </div>
+      <div class="form-group">
+        <label>Steuercode</label>
+        <input type="text" id="mdf_taxCode">
+      </div>
+      <div class="form-group">
+        <label>Bankname</label>
+        <input type="text" id="mdf_bankName">
+      </div>
+      <div class="form-group">
+        <label>IBAN</label>
+        <input type="text" id="mdf_iban">
+      </div>
+      <div class="form-group">
+        <label>BIC (Swift-Code)</label>
+        <input type="text" id="mdf_bic">
+      </div>
+      <div class="form-group">
+        <label>Kontonummer</label>
+        <input type="text" id="mdf_kontoNummer">
+      </div>
+      <div class="form-group">
+        <label>Kontoinhaber</label>
+        <input type="text" id="mdf_kontoInhaber">
+      </div>
+      <div class="form-group">
+        <label>Bankleitzahl</label>
+        <input type="text" id="mdf_bankleitzahl">
+      </div>
+      <div class="form-group">
+        <label>Referenz</label>
+        <input type="text" id="mdf_referenz">
+      </div>
+      <input type="submit" value="Speichern" class="button">
+    </form>
+    <button class="button" onclick="showSection('masterdata'); return false;">Zurück</button>
+  </div>
+  
+  <!-- DROP DOWN -->
+  <div id="dropdown" class="page-section"></div>
+  <div id="verwaltung_details" class="page-section">
+    <h1>Verwaltungsdetails</h1>
+    <div id="verwaltungContainer"></div>
+    <button class="button" onclick="showSection('dropdown'); return false;">Zurück</button>
+  </div>
+  
+  <hr>
+  <footer>
+    <p>&copy; 2025 Warenwirtschaftssystem</p>
+  </footer>
+</body>
+</html>
